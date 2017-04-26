@@ -1,0 +1,4 @@
+# shifting bloom filter extension
+comment = 'type for shifting-bloom-filter'
+default_version = '1.0.0'
+module_pathname = '$libdir/shbf'

@@ -5,6 +5,10 @@
 #include <string.h>
 #include "MurmurHash3.h"
 
+#include "postgres.h"
+#include "fmgr.h"
+#include "utils/datum.h"
+
 #define MURMUR_HASH_SEED 304837963
 
 #define K_OPT_M 0.7009
@@ -24,6 +28,20 @@ typedef struct ShBF {
     int w;
 } ShBF;
 
+/* Declarations for dynamic loading */
+PG_MODULE_MAGIC;
+
+/* Postgres function prototypes */
+PG_FUNCTION_INFO_V1(new_shbf_m);
+/*PG_FUNCTION_INFO_V1(new_shbf_a);
+PG_FUNCTION_INFO_V1(new_shbf_x);
+PG_FUNCTION_INFO_V1(insert_shbf_m);
+PG_FUNCTION_INFO_V1(insert_shbf_a);
+PG_FUNCTION_INFO_V1(insert_shbf_x);
+PG_FUNCTION_INFO_V1(query_shbf_m);
+PG_FUNCTION_INFO_V1(query_shbf_a);
+PG_FUNCTION_INFO_V1(query_shbf_x);
+*/
 
 /* Function prototypes */
 ShBF* new_ShBF_M(int m, int n);
@@ -43,15 +61,15 @@ void set_bit_ShBF(ShBF* shbf, int index);
 void print_ShBF(ShBF* shbf);
 void free_ShBF(ShBF* shbf);
 
-void test_ShBF_M();
-void test_ShBF_A();
-void test_ShBF_X();
+void test_ShBF_M(void);
+void test_ShBF_A(void);
+void test_ShBF_X(void);
 char** generate_elements(int n);
-char* generate_element();
+char* generate_element(void);
 
 
 /* Main  - Executes tests */
-int main() {
+/*int main() {
 
     srand(time(NULL));
 
@@ -59,7 +77,17 @@ int main() {
    
     return 0;
 }
+*/
 
+/* TODO */
+Datum new_shbf_m(PG_FUNCTION_ARGS) {
+    int m = PG_GETARG_INT32(0);
+    int n = PG_GETARG_INT32(1);
+
+    ShBF* shbf_m = new_ShBF_M(m, n);
+
+    PG_RETURN_POINTER(shbf_m);
+}
 
 /* Constructor for ShBF_M */
 ShBF* new_ShBF_M(int m, int n) {
@@ -195,7 +223,7 @@ void insert_ShBF_A(ShBF* shbf_a, char* e, int s1, int s2) {
     uint64_t i_hash;
     int first_offset_value;
     int second_offset_value;
-    int offset_value;
+    int offset_value = 0;
     int index;
     int i;
 
@@ -272,6 +300,8 @@ int query_ShBF_A(ShBF* shbf_a, char* e) {
     else if (both)                  { return 2; }
     else if (s1_only)               { return 1; }
     else if (s2_only)               { return 0; }
+
+    return -1;
 }
 
 
@@ -392,7 +422,6 @@ void set_bit_ShBF(ShBF* shbf, int index) {
     int B_index;
     int byte_offset;
     unsigned char mask = 128;    
-    int bit;
 
     B_index = index / 8;
     byte_offset = index % 8;
@@ -679,32 +708,15 @@ char** generate_elements(int n) {
     char** random_elements;
     char* random_element;
     int size = 0;
-    int duplicate;
-    int i;
     
     random_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * n);
 
     while (size < n) {
 
-        //printf("Size: %d\n", size);
-
         random_element = generate_element();
-
-        //duplicate = 0;
-        //for (i = 0; i < size; i++) {
-
-        //    if (!strcmp(random_element, random_elements[i])) {
-
-        //        duplicate = 1;
-        //        break;
-        //    }
-        //}
-
-        //if (!duplicate) { 
-        
-            random_elements[size] = random_element;
-            size += 1; 
-        //}
+ 
+        random_elements[size] = random_element;
+        size += 1; 
     }
 
     return random_elements;
