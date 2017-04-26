@@ -26,6 +26,15 @@ typedef struct BF {
     int k;
 } BF;
 
+/* Count Min Sketch struct */
+typedef struct CMS
+{
+    char length[4];
+    uint32 sketchDepth;
+    uint32 sketchWidth;
+    uint64 sketch[1];
+} CMS;
+
 /* General shifting bloom filter struct */
 typedef struct ShBF {
     unsigned char* B;
@@ -38,6 +47,14 @@ typedef struct ShBF {
 
 /* Declarations for dynamic loading */
 PG_MODULE_MAGIC;
+
+/* PG_FUNCTION_INFO_V1(new_bf); */
+/* PG_FUNCTION_INFO_V1(insert_bf); */
+/* PG_FUNCTION_INFO_V1(query_bf); */
+
+PG_FUNCTION_INFO_V1(new_cms);
+PG_FUNCTION_INFO_V1(insert_cms);
+PG_FUNCTION_INFO_V1(query_cms);
 
 /* Postgres function prototypes */
 PG_FUNCTION_INFO_V1(new_shbf_m);
@@ -55,6 +72,10 @@ PG_FUNCTION_INFO_V1(query_shbf_x);
 BF* new_BF(int m, int n);
 void insert_BF(BF* bf, char* e);
 int query_BF(BF* bf, char* e);
+
+CMS* new_CMS(float8 errorBound, float8 confidenceInterval);
+CMS* insert_CMS(CMS* currentCms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry);
+uint64 query_CMS(CMS* cms, Datum item, TypeCacheEntry* itemTypeCacheEntry);
 
 ShBF* new_ShBF_M(int m, int n);
 void insert_ShBF_M(ShBF* shbf_m, char* e);
@@ -78,6 +99,10 @@ void set_bit_ShBF(ShBF* shbf, int index);
 void print_ShBF(ShBF* shbf);
 void free_ShBF(ShBF* shbf);
 
+uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry);
+void convert_datum_to_bytes(Datum datum, TypeCacheEntry* datumTypeCacheEntry, StringInfo datumString);
+uint64 estimate_hashed_item_frequency(CMS* cms, uint64* hashValueArray);
+
 void test_BF(void);
 void test_iBF(void);
 void test_ShBF_M(void);
@@ -88,7 +113,7 @@ char** generate_elements(int n);
 char* generate_element(void);
 
 
-/* Main  - Executes tests */
+/* Main - Executes tests */
 /*
 int main() {
 
@@ -99,6 +124,81 @@ int main() {
     return 0;
 }
 */
+
+
+/* TODO */
+Datum new_cms(PG_FUNCTION_ARGS) {
+
+    float8 errorBound = PG_GETARG_FLOAT8(0);
+    float8 confidenceInterval =  PG_GETARG_FLOAT8(1);
+
+    CMS* cms = new_CMS(errorBound, confidenceInterval);
+
+    PG_RETURN_POINTER(cms);
+}
+
+
+/* TODO */
+Datum insert_cms(PG_FUNCTION_ARGS) {
+
+    CMS* currentCms = NULL;
+    CMS* updatedCms = NULL;
+    Datum newItem = 0;
+    TypeCacheEntry* newItemTypeCacheEntry = NULL;
+    Oid newItemType = InvalidOid;
+
+    /* Check whether cms is null */
+    if (PG_ARGISNULL(0))
+    {
+        PG_RETURN_NULL();
+    }
+    else
+    {
+        currentCms = (CMS*) PG_GETARG_VARLENA_P(0);
+    }
+
+    /* If new item is null, then return current CountMinSketch */
+    if (PG_ARGISNULL(1))
+    {
+        PG_RETURN_POINTER(currentCms);
+    }
+
+    /* Get item type and check if it is valid */
+    newItemType = get_fn_expr_argtype(fcinfo->flinfo, 1);
+    if (newItemType == InvalidOid)
+    {
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("could not determine input data type")));
+    }
+
+    newItem = PG_GETARG_DATUM(1);
+    newItemTypeCacheEntry = lookup_type_cache(newItemType, 0);
+    updatedCms = insert_CMS(currentCms, newItem, newItemTypeCacheEntry);
+
+    PG_RETURN_POINTER(updatedCms);
+}
+
+
+/* TODO */
+Datum query_cms(PG_FUNCTION_ARGS) {
+
+    CMS* cms = (CMS*) PG_GETARG_VARLENA_P(0);
+    Datum item = PG_GETARG_DATUM(1);
+    Oid itemType = get_fn_expr_argtype(fcinfo->flinfo, 1);
+    TypeCacheEntry *itemTypeCacheEntry = NULL;
+    uint64 frequency = 0;
+
+    if (itemType == InvalidOid)
+    {
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("could not determine input data types")));
+    }
+
+    itemTypeCacheEntry = lookup_type_cache(itemType, 0);
+    frequency = query_CMS(cms, item, itemTypeCacheEntry);
+
+    PG_RETURN_INT32(frequency);
+}
 
 
 /* TODO */
@@ -182,6 +282,169 @@ int query_BF(BF* bf, char* e) {
     }
 
     return 1;
+}
+
+
+/* TODO */
+CMS* new_CMS(float8 errorBound, float8 confidenceInterval) {
+
+    CMS* cms = NULL;
+    uint32 sketchWidth = 0;
+    uint32 sketchDepth = 0;
+    Size staticStructSize = 0;
+    Size sketchSize = 0;
+    Size totalCmsSize = 0;
+    
+    if (errorBound <= 0 || errorBound >= 1)
+    {
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("invalid parameters for cms"),
+                        errhint("Error bound has to be between 0 and 1")));
+    }
+    else if (confidenceInterval <= 0 || confidenceInterval >= 1)
+    {
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+                        errmsg("invalid parameters for cms"),
+                        errhint("Confidence interval has to be between 0 and 1")));
+    }
+
+    sketchWidth = (uint32) ceil(exp(1) / errorBound);
+    sketchDepth = (uint32) ceil(log(1 / (1 - confidenceInterval)));
+    sketchSize =  sizeof(uint64) * sketchDepth * sketchWidth;
+    staticStructSize = sizeof(CMS);
+    totalCmsSize = staticStructSize + sketchSize;
+
+    cms = palloc0(totalCmsSize);
+    cms->sketchDepth = sketchDepth;
+    cms->sketchWidth = sketchWidth;
+
+    SET_VARSIZE(cms, totalCmsSize);
+
+    return cms;
+}
+
+
+/* TODO */
+CMS* insert_CMS(CMS* currentCms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry) {
+
+    Datum detoastedItem = 0;
+
+    /* If datum is toasted, detoast it */
+    if (newItemTypeCacheEntry->typlen == -1)
+    {
+        detoastedItem = PointerGetDatum(PG_DETOAST_DATUM(newItem));
+    }
+    else
+    {
+        detoastedItem = newItem;
+    }
+
+    update_cms_in_place(currentCms, detoastedItem, newItemTypeCacheEntry);
+
+    return currentCms;
+}
+
+
+/* TODO */
+uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry) {
+
+    uint32 hashIndex = 0;
+    uint64 hashValueArray[2] = {0, 0};
+    StringInfo newItemString = makeStringInfo();
+    uint64 newFrequency = 0;
+    uint64 minFrequency = UINT64_MAX;
+
+    /* Get hashed values for the given item */
+    convert_datum_to_bytes(newItem, newItemTypeCacheEntry, newItemString);
+    MurmurHash3_x64_128(newItemString->data, newItemString->len, MURMUR_SEED,
+                        &hashValueArray);
+
+    /*
+     * Estimate frequency of the given item from hashed values and calculate new
+     * frequency for this item.
+     */
+    minFrequency = estimate_hashed_item_frequency(cms, hashValueArray);
+    newFrequency = minFrequency + 1;
+
+    /*
+     * We can create an independent hash function for each index by using two hash
+     * values from the Murmur Hash function. This is a standard technique from the
+     * hashing literature for the additional hash functions of the form
+     * g(x) = h1(x) + i * h2(x) and does not hurt the independence between hash
+     * function. For more information you can check this paper:
+     * http://www.eecs.harvard.edu/~kirsch/pubs/bbbf/esa06.pdf
+     */
+    for (hashIndex = 0; hashIndex < cms->sketchDepth; hashIndex++)
+    {
+        uint64 hashValue = hashValueArray[0] + (hashIndex * hashValueArray[1]);
+        uint32 widthIndex = hashValue % cms->sketchWidth;
+        uint32 depthOffset = hashIndex * cms->sketchWidth;
+        uint32 counterIndex = depthOffset + widthIndex;
+
+        /*
+         * Selective update to decrease effect of collisions. We only update
+         * counters less than new frequency because other counters are bigger
+         * due to collisions.
+         */
+        uint64 counterFrequency = cms->sketch[counterIndex];
+        if (newFrequency > counterFrequency)
+        {
+            cms->sketch[counterIndex] = newFrequency;
+        }
+    }
+
+    return newFrequency;
+}
+
+
+/* TODO */
+void convert_datum_to_bytes(Datum datum, TypeCacheEntry* datumTypeCacheEntry, StringInfo datumString) {
+
+    int16 datumTypeLength = datumTypeCacheEntry->typlen;
+    bool datumTypeByValue = datumTypeCacheEntry->typbyval;
+    Size datumSize = 0;
+
+    if (datumTypeLength == -1)
+    {
+        datumSize = VARSIZE_ANY_EXHDR(DatumGetPointer(datum));
+    }
+    else
+    {
+        datumSize = datumGetSize(datum, datumTypeByValue, datumTypeLength);
+    }
+
+    if (datumTypeByValue)
+    {
+        appendBinaryStringInfo(datumString, (char *) &datum, datumSize);
+    }
+    else
+    {
+        appendBinaryStringInfo(datumString, VARDATA_ANY(datum), datumSize);
+    }
+}
+
+
+/* TODO */
+uint64 estimate_hashed_item_frequency(CMS* cms, uint64* hashValueArray) {
+
+    uint32 hashIndex = 0;
+    uint64 minFrequency = UINT64_MAX;
+
+    for (hashIndex = 0; hashIndex < cms->sketchDepth; hashIndex++)
+    {
+        uint64 hashValue = hashValueArray[0] + (hashIndex * hashValueArray[1]);
+        uint32 widthIndex = hashValue % cms->sketchWidth;
+        uint32 depthOffset = hashIndex * cms->sketchWidth;
+        uint32 counterIndex = depthOffset + widthIndex;
+
+        uint64 counterFrequency = cms->sketch[counterIndex];
+        if (counterFrequency < minFrequency)
+        {
+            minFrequency = counterFrequency;
+        }
+    }
+
+    return minFrequency;
 }
 
 
