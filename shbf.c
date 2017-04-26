@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <time.h>
+#include <string.h>
 #include "MurmurHash3.h"
 
 #define MURMUR_HASH_SEED 304837963
