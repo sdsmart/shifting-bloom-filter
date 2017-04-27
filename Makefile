@@ -12,7 +12,7 @@ OBJS =		\
 
 EXTENSION = shbf
 DATA =		\
-			shbf.sql \
+			shbf--1.0.0.sql \
 			$(NULL)
 
 PG_CPPFLAGS += -fPIC

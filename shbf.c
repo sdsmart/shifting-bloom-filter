@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <math.h>
 #include "MurmurHash3.h"
 
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/datum.h"
+#include "utils/typcache.h"
+#include "lib/stringinfo.h"
+#include "utils/bytea.h"
 
 #define MURMUR_HASH_SEED 304837963
 
@@ -19,11 +23,12 @@
 
 /* General bloom filter struct */
 typedef struct BF {
-    unsigned char* B;
+    char vl_len_[4];
     int B_length;
     int m;
     int n;
     int k;
+    unsigned char B[1];
 } BF;
 
 /* Count Min Sketch struct */
@@ -48,13 +53,21 @@ typedef struct ShBF {
 /* Declarations for dynamic loading */
 PG_MODULE_MAGIC;
 
-/* PG_FUNCTION_INFO_V1(new_bf); */
-/* PG_FUNCTION_INFO_V1(insert_bf); */
-/* PG_FUNCTION_INFO_V1(query_bf); */
+PG_FUNCTION_INFO_V1(new_bf);
+PG_FUNCTION_INFO_V1(insert_bf);
+PG_FUNCTION_INFO_V1(query_bf);
+PG_FUNCTION_INFO_V1(bf_input);
+PG_FUNCTION_INFO_V1(bf_output);
+PG_FUNCTION_INFO_V1(bf_receive);
+PG_FUNCTION_INFO_V1(bf_send);
 
 PG_FUNCTION_INFO_V1(new_cms);
 PG_FUNCTION_INFO_V1(insert_cms);
 PG_FUNCTION_INFO_V1(query_cms);
+PG_FUNCTION_INFO_V1(cms_input);
+PG_FUNCTION_INFO_V1(cms_output);
+PG_FUNCTION_INFO_V1(cms_receive);
+PG_FUNCTION_INFO_V1(cms_send);
 
 /* Postgres function prototypes */
 PG_FUNCTION_INFO_V1(new_shbf_m);
@@ -124,6 +137,85 @@ int main() {
     return 0;
 }
 */
+
+
+/* TODO */
+Datum new_bf(PG_FUNCTION_ARGS) {
+
+    int m = PG_GETARG_INT32(0);
+    int n = PG_GETARG_INT32(1);
+
+    BF* bf = new_BF(m, n);
+
+    print_BF(bf);
+
+    PG_RETURN_POINTER(bf);
+}
+
+
+/* TODO */
+Datum insert_bf(PG_FUNCTION_ARGS) {
+
+    BF* bf = NULL;
+    char* new_item = 0;
+    
+    bf = (BF*) PG_GETARG_VARLENA_P(0);
+    
+    new_item = PG_GETARG_CSTRING(1);
+
+    insert_BF(bf, new_item);
+
+    PG_RETURN_POINTER(bf);
+}
+
+
+/* TODO */
+Datum query_bf(PG_FUNCTION_ARGS) {
+
+    BF* bf = (BF*) PG_GETARG_VARLENA_P(0);
+    char* item = PG_GETARG_CSTRING(1);
+    int result = 0;
+
+    result = query_BF(bf, item);
+ 
+    PG_RETURN_INT32(result);
+}
+
+
+/* TODO */
+Datum bf_input(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum bf_output(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
+
+	PG_RETURN_CSTRING(datum);
+}
+
+
+/* TODO */
+Datum bf_receive(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum bf_send(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
+
+	return datum;
+}
 
 
 /* TODO */
@@ -202,6 +294,42 @@ Datum query_cms(PG_FUNCTION_ARGS) {
 
 
 /* TODO */
+Datum cms_input(PG_FUNCTION_ARGS)
+{
+	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum cms_output(PG_FUNCTION_ARGS)
+{
+	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
+
+	PG_RETURN_CSTRING(datum);
+}
+
+
+/* TODO */
+Datum cms_receive(PG_FUNCTION_ARGS)
+{
+	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum cms_send(PG_FUNCTION_ARGS)
+{
+	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
 Datum new_shbf_m(PG_FUNCTION_ARGS) {
     int m = PG_GETARG_INT32(0);
     int n = PG_GETARG_INT32(1);
@@ -219,8 +347,8 @@ BF* new_BF(int m, int n) {
     int k;
     int k_floor;
     float k_unrounded;
-    unsigned char* B;
     int B_size;
+    Size bf_size;
 
     k_unrounded = (K_OPT_BF * ((float)m / n)) / 2;
     k_floor = (int)k_unrounded;
@@ -228,14 +356,16 @@ BF* new_BF(int m, int n) {
     if (k == 0) { k = 1; }
 
     B_size = ((m % 8) == 0) ? m : ((m / 8) + 1) * 8;
-    B = (unsigned char*)malloc(B_size);
 
-    bf = (BF*)malloc(B_size + (4 * sizeof(int)));
-    bf->B = B;
+    bf_size = B_size + sizeof(BF);
+
+    bf = palloc0(bf_size);
     bf->B_length = (B_size / 8);
     bf->m = m;
     bf->n = n;
     bf->k = k;
+
+    SET_VARSIZE(bf, bf_size);
 
     return bf;
 }
@@ -249,16 +379,18 @@ void insert_BF(BF* bf, char* e) {
     int index;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < bf->k; i++) { 
         
         i_hash = hva[0] + i*hva[1];
 
         index = i_hash % bf->m;
-    
+   
         set_bit_BF(bf, index);
     }
+
+    print_BF(bf);
 }
 
 
@@ -270,16 +402,17 @@ int query_BF(BF* bf, char* e) {
     int index;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < bf->k; i++) { 
-        
+ 
         i_hash = hva[0] + i*hva[1];
 
         index = i_hash % bf->m;
     
+        print_BF(bf);
         if (get_bit_BF(bf, index) != 1) { return 0; }
-    }
+    } 
 
     return 1;
 }
@@ -346,6 +479,35 @@ CMS* insert_CMS(CMS* currentCms, Datum newItem, TypeCacheEntry* newItemTypeCache
 
 
 /* TODO */
+uint64 query_CMS(CMS* cms, Datum item, TypeCacheEntry* itemTypeCacheEntry) {
+
+	uint64 hashValueArray[2] = {0, 0};
+	StringInfo itemString = makeStringInfo();
+	uint64 frequency = 0;
+
+	/* If datum is toasted, detoast it */
+	if (itemTypeCacheEntry->typlen == -1)
+	{
+		Datum detoastedItem =  PointerGetDatum(PG_DETOAST_DATUM(item));
+		convert_datum_to_bytes(detoastedItem, itemTypeCacheEntry, itemString);
+	}
+	else
+	{
+		convert_datum_to_bytes(item, itemTypeCacheEntry, itemString);
+	}
+
+	/*
+	 * Calculate hash values for the given item and then get frequency estimate
+	 * with these hashed values.
+	 */
+	MurmurHash3_x64_128(itemString->data, itemString->len, MURMUR_HASH_SEED, &hashValueArray);
+	frequency = estimate_hashed_item_frequency(cms, hashValueArray);
+
+	return frequency;
+}
+
+
+/* TODO */
 uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry) {
 
     uint32 hashIndex = 0;
@@ -356,7 +518,7 @@ uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeC
 
     /* Get hashed values for the given item */
     convert_datum_to_bytes(newItem, newItemTypeCacheEntry, newItemString);
-    MurmurHash3_x64_128(newItemString->data, newItemString->len, MURMUR_SEED,
+    MurmurHash3_x64_128(newItemString->data, newItemString->len, MURMUR_HASH_SEED,
                         &hashValueArray);
 
     /*
@@ -519,6 +681,7 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
     int second_index;
     int i;
 
+    
     MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
 
     offset_hash = hva[0];
@@ -768,7 +931,7 @@ int get_bit_BF(BF* bf, int index) {
     B_index = index / 8;
     byte_offset = index % 8;
 
-    byte = bf->B[B_index];
+    byte = bf->B[B_index]; 
     bit = (byte >> (7 - byte_offset)) & 1;
 
     return bit;
