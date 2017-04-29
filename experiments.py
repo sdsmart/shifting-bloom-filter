@@ -96,7 +96,7 @@ def run_membership_experiments(connection):
         true_negatives -= result
 
     # Printing results of TEST 2
-    print('/n=============== TEST 2 RESULTS ===============')
+    print('\n=============== TEST 2 RESULTS ===============')
     print('True negatives: {0}'.format(true_negatives))
     print('False positives: {0}'.format(false_positives))
 
