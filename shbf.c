@@ -42,12 +42,13 @@ typedef struct CMS
 
 /* General shifting bloom filter struct */
 typedef struct ShBF {
-    unsigned char* B;
+    char vl_len_[4];
     int B_length;
     int m;
     int n;
     int k;
     int w;
+    unsigned char B[1];
 } ShBF;
 
 /* Declarations for dynamic loading */
@@ -71,15 +72,12 @@ PG_FUNCTION_INFO_V1(cms_send);
 
 /* Postgres function prototypes */
 PG_FUNCTION_INFO_V1(new_shbf_m);
-/*PG_FUNCTION_INFO_V1(new_shbf_a);
-PG_FUNCTION_INFO_V1(new_shbf_x);
 PG_FUNCTION_INFO_V1(insert_shbf_m);
-PG_FUNCTION_INFO_V1(insert_shbf_a);
-PG_FUNCTION_INFO_V1(insert_shbf_x);
 PG_FUNCTION_INFO_V1(query_shbf_m);
-PG_FUNCTION_INFO_V1(query_shbf_a);
-PG_FUNCTION_INFO_V1(query_shbf_x);
-*/
+PG_FUNCTION_INFO_V1(shbf_input);
+PG_FUNCTION_INFO_V1(shbf_output);
+PG_FUNCTION_INFO_V1(shbf_receive);
+PG_FUNCTION_INFO_V1(shbf_send);
 
 /* Function prototypes */
 BF* new_BF(int m, int n);
@@ -126,17 +124,14 @@ char** generate_elements(int n);
 char* generate_element(void);
 
 
-/* Main - Executes tests */
 /*
-int main() {
-
-    srand(time(NULL));
-
-    test_iBF();
-
-    return 0;
-}
+ * --------------------------
+ * --- Postgres Functions ---
+ * --------------------------
 */
+
+
+/* --- Bloom Filter Functions --- */
 
 
 /* TODO */
@@ -214,6 +209,9 @@ Datum bf_send(PG_FUNCTION_ARGS) {
 
 	return datum;
 }
+
+
+/* --- Count Min Sketch Fuctions --- */
 
 
 /* TODO */
@@ -327,6 +325,9 @@ Datum cms_send(PG_FUNCTION_ARGS)
 }
 
 
+/* --- Shifting Bloom Filter Functions --- */
+
+
 /* TODO */
 Datum new_shbf_m(PG_FUNCTION_ARGS) {
     int m = PG_GETARG_INT32(0);
@@ -336,6 +337,81 @@ Datum new_shbf_m(PG_FUNCTION_ARGS) {
 
     PG_RETURN_POINTER(shbf_m);
 }
+
+
+/* TODO */
+Datum insert_shbf_m(PG_FUNCTION_ARGS) {
+
+    ShBF* shbf_m = NULL;
+    char* new_item = 0;
+    
+    shbf_m = (ShBF*) PG_GETARG_VARLENA_P(0);
+    
+    new_item = PG_GETARG_CSTRING(1);
+
+    insert_ShBF_M(shbf_m, new_item);
+
+    PG_RETURN_POINTER(shbf_m);
+}
+
+
+/* TODO */
+Datum query_shbf_m(PG_FUNCTION_ARGS) {
+
+    ShBF* shbf_m = (ShBF*) PG_GETARG_VARLENA_P(0);
+    char* item = PG_GETARG_CSTRING(1);
+    int result = 0;
+
+    result = query_ShBF_M(shbf_m, item);
+ 
+    PG_RETURN_INT32(result);
+}
+
+
+/* TODO */
+Datum shbf_input(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum shbf_output(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
+
+	PG_RETURN_CSTRING(datum);
+}
+
+
+/* TODO */
+Datum shbf_receive(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/* TODO */
+Datum shbf_send(PG_FUNCTION_ARGS) {
+
+	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
+
+	return datum;
+}
+
+
+/*
+ * -------------------
+ * --- C Functions ---
+ * -------------------
+*/ 
+
+
+/* --- Bloom Filter Functions --- */
 
 
 /* Constructor for BF */
@@ -353,12 +429,12 @@ BF* new_BF(int m, int n) {
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
     if (k == 0) { k = 1; }
 
-    B_size = ((m % 8) == 0) ? m : ((m / 8) + 1) * 8;
+    B_size = ((m % 8) == 0) ? (m / 8) : ((m / 8) + 1);
 
     bf_size = B_size + sizeof(BF);
 
     bf = palloc0(bf_size);
-    bf->B_length = (B_size / 8);
+    bf->B_length = B_size;
     bf->m = m;
     bf->n = n;
     bf->k = k;
@@ -414,6 +490,9 @@ int query_BF(BF* bf, char* e) {
 
     return 1;
 }
+
+
+/* --- Count Min Sketch Functions --- */
 
 
 /* TODO */
@@ -608,6 +687,9 @@ uint64 estimate_hashed_item_frequency(CMS* cms, uint64* hashValueArray) {
 }
 
 
+/* --- Shifting Bloom Filter Functions --- */
+
+
 /* Constructor for ShBF_M */
 ShBF* new_ShBF_M(int m, int n) {
 
@@ -615,8 +697,8 @@ ShBF* new_ShBF_M(int m, int n) {
     int k;
     int k_floor;
     float k_unrounded;
-    unsigned char* B;
     int B_size;
+    Size shbf_size;
 
     k_unrounded = K_OPT_SHBF_M * ((float)m / n);
     k_floor = (int)k_unrounded;
@@ -624,16 +706,18 @@ ShBF* new_ShBF_M(int m, int n) {
     if (k == 0) { k = 1; }
 
     B_size = m + (W - 1);
-    B_size = ((B_size % 8) == 0) ? B_size : ((B_size / 8) + 1) * 8;
-    B = (unsigned char*)malloc(B_size);
+    B_size = ((B_size % 8) == 0) ? (B_size / 8) : ((B_size / 8) + 1);
 
-    shbf = (ShBF*)malloc(B_size + (5 * sizeof(int)));
-    shbf->B = B;
-    shbf->B_length = (B_size / 8);
+    shbf_size = B_size + sizeof(ShBF);
+
+    shbf = palloc0(shbf_size);
+    shbf->B_length = B_size;
     shbf->m = m;
     shbf->n = n;
     shbf->k = k;
     shbf->w = W;
+
+    SET_VARSIZE(shbf, shbf_size);
 
     return shbf;
 }
@@ -650,7 +734,7 @@ void insert_ShBF_M(ShBF* shbf_m, char* e) {
     int second_index;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_hash = hva[0];
     offset_value = (offset_hash % (shbf_m->w - 1)) + 1;
@@ -680,7 +764,7 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
     int i;
 
     
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_hash = hva[0];
     offset_value = (offset_hash % (shbf_m->w - 1)) + 1;
@@ -702,7 +786,6 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
     return 1;
 }
 
-
 /* Constructor for ShBF_A */
 ShBF* new_ShBF_A(int m, int n) {
 
@@ -710,8 +793,8 @@ ShBF* new_ShBF_A(int m, int n) {
     int k;
     int k_floor;
     float k_unrounded;
-    unsigned char* B;
     int B_size;
+    Size shbf_size;
 
     k_unrounded = K_OPT_SHBF_A * ((float)m / n);
     k_floor = (int)k_unrounded;
@@ -719,16 +802,18 @@ ShBF* new_ShBF_A(int m, int n) {
     if (k == 0) { k = 1; }
 
     B_size = m + (W - 2);
-    B_size = ((B_size % 8) == 0) ? B_size : ((B_size / 8) + 1) * 8;
-    B = (unsigned char*)malloc(B_size);
+    B_size = ((B_size % 8) == 0) ? (B_size / 8) : ((B_size / 8) + 1);
 
-    shbf = (ShBF*)malloc(B_size + (5 * sizeof(int)));
-    shbf->B = B;
-    shbf->B_length = (B_size / 8);
+    shbf_size = B_size + sizeof(ShBF);
+
+    shbf = palloc0(shbf_size);
+    shbf->B_length = B_size;
     shbf->m = m;
     shbf->n = n;
     shbf->k = k;
     shbf->w = W;
+
+    SET_VARSIZE(shbf, shbf_size);
 
     return shbf;
 }
@@ -747,7 +832,7 @@ void insert_ShBF_A(ShBF* shbf_a, char* e, int s1, int s2) {
     int index;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     first_offset_hash = hva[0];
     second_offset_hash = hva[1];
@@ -788,7 +873,7 @@ int query_ShBF_A(ShBF* shbf_a, char* e) {
     int s2_only;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     first_offset_hash = hva[0];
     second_offset_hash = hva[1];
@@ -832,25 +917,27 @@ ShBF* new_ShBF_X(int m, int n, int max_x) {
     int k;
     int k_floor;
     float k_unrounded;
-    unsigned char* B;
     int B_size;
-    
+    Size shbf_size;
+
     k_unrounded = K_OPT_SHBF_X * ((float)m / n);
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
     if (k == 0) { k = 1; }
 
     B_size = (m + (max_x - 1));
-    B_size = ((B_size % 8) == 0) ? B_size : ((B_size / 8) + 1) * 8;
-    B = (unsigned char*)malloc(B_size);
+    B_size = ((B_size % 8) == 0) ? (B_size / 8) : ((B_size / 8) + 1);
 
-    shbf = (ShBF*)malloc(B_size + (5 * sizeof(int)));
-    shbf->B = B;
-    shbf->B_length = (B_size / 8);
+    shbf_size = B_size + sizeof(ShBF);
+
+    shbf = palloc0(shbf_size);
+    shbf->B_length = B_size;
     shbf->m = m;
     shbf->n = n;
     shbf->k = k;
     shbf->w = max_x;
+
+    SET_VARSIZE(shbf, shbf_size);
 
     return shbf;
 }
@@ -865,7 +952,7 @@ void insert_ShBF_X(ShBF* shbf_x, char* e, int x) {
     int index;
     int i;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_value = x - 1;
 
@@ -890,7 +977,7 @@ int query_ShBF_X(ShBF* shbf_x, char* e) {
     int i;
     int j;
 
-    MurmurHash3_x64_128(e, (sizeof(e) / sizeof(char)), MURMUR_HASH_SEED, &hva);
+    MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < shbf_x->k; i++) {
 
@@ -1051,6 +1138,13 @@ void free_ShBF(ShBF* shbf) {
     free(shbf->B);
     free(shbf);
 }
+
+
+/* 
+ * ----------------------
+ * --- Test Functions ---
+ * ----------------------
+*/  
 
 
 /* Test BF */

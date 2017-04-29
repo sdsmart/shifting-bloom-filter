@@ -90,3 +90,55 @@ CREATE FUNCTION query_bf(bf, cstring)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+/* TODO */
+CREATE TYPE shbf;
+
+CREATE FUNCTION shbf_input(cstring)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION shbf_output(shbf)
+    RETURNS cstring
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE FUNCTION shbf_receive(internal)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+   
+CREATE FUNCTION shbf_send(shbf)
+    RETURNS bytea
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+CREATE TYPE shbf (
+    input = shbf_input,
+    output = shbf_output,
+    receive = shbf_receive,
+    send = shbf_send,
+    storage = extended
+);
+
+/* TODO */
+CREATE FUNCTION new_shbf_m(integer, integer)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+	    
+CREATE FUNCTION insert_shbf_m(shbf, cstring)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;	
+	
+CREATE FUNCTION query_shbf_m(shbf, cstring)
+    RETURNS integer
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
+
+/* TODO */
+
+
+/* TODO */
+
