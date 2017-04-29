@@ -34,12 +34,12 @@ CREATE FUNCTION new_cms(double precision default 0.001, double precision default
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 	    
-CREATE FUNCTION insert_cms(cms, integer)
+CREATE FUNCTION insert_cms(cms, text)
     RETURNS cms
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
 	
-CREATE FUNCTION query_cms(cms, integer)
+CREATE FUNCTION query_cms(cms, text)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;

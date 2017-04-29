@@ -34,7 +34,7 @@ typedef struct BF {
 /* Count Min Sketch struct */
 typedef struct CMS
 {
-    char length[4];
+    char vl_len_[4];
     uint32 sketchDepth;
     uint32 sketchWidth;
     uint64 sketch[1];
@@ -146,8 +146,6 @@ Datum new_bf(PG_FUNCTION_ARGS) {
     int n = PG_GETARG_INT32(1);
 
     BF* bf = new_BF(m, n);
-
-    print_BF(bf);
 
     PG_RETURN_POINTER(bf);
 }
