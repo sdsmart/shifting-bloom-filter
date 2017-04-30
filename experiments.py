@@ -5,11 +5,12 @@
 import psycopg2
 import random
 import time
+import math
 
 
 # Constants
 MAX_ELEMENT = 9999999999
-
+CMS_UNIT_SIZE_IN_BITS = 32
 
 # Main function
 def main():
@@ -18,6 +19,7 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
+    exp_shbf_x_correctness_rate(connection)
 
     # Closing the database connection
     connection.close()
@@ -227,58 +229,87 @@ def test_shbf_m(connection):
 # TODO
 def exp_shbf_x_correctness_rate(connection):    
 
-    m = 120000
-    n = 10000
+    m = 15000
+    n = 1000
     max_x = 57
-
-    result = 0
-    good = 0
-    bad = 0
-    wrong = 0
-
-    num_in_elements = n
 
     elements = generate_elements(n)
     counts = [random.randint(1, max_x) for i in range(n)]
   
-    # Creating postgres extension and an empty bloom filter
+    confidence_level = 0.05
+    d = math.log(1 / (1 - confidence_level))
+    w = (m / CMS_UNIT_SIZE_IN_BITS) / d
+    error_bound = math.e / w
+
+    print('error bound: {0}'.format(error_bound))
+    print('confidence_level: {0}'.format(confidence_level))
+    print('cms size: {0}'.format(round(w * d * CMS_UNIT_SIZE_IN_BITS)))
+
     cursor = connection.cursor()
     cursor.execute('CREATE EXTENSION shbf')
     cursor.execute('CREATE TABLE shbf_x_table (shbf_x_column shbf)')
     cursor.execute('INSERT INTO shbf_x_table VALUES (new_shbf_x({0}, {1}, {2}))'.format(m, n, max_x))
+    cursor.execute('CREATE TABLE cms_table (cms_column cms)')
+    cursor.execute('INSERT INTO cms_table VALUES (new_cms({0}, {1}))'.format(error_bound, confidence_level))
     connection.commit()
 
-    # Inserting elements
     for i, e in enumerate(elements):
 
+        if i % 100 == 0 and i > 0:
+            print('inserting into shbf_x: {0}'.format(i))
+        
         query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
         cursor.execute(query)
 
+    for i, e in enumerate(elements):
+
+        if i % 100 == 0 and i > 0:
+            print('inserting into cms: {0}'.format(i))
+        
+        for j in range(counts[i]):
+
+            query = "UPDATE cms_table SET cms_column = insert_cms(cms_column, '{0}')".format(e)
+            cursor.execute(query)
+
     connection.commit()
 
-    # Querying the inserted elements
+    result = 0
+    exact_shbf_x = 0
+    bad_shbf_x = 0
+    exact_cms = 0
+    bad_cms = 0
+
     for i, e in enumerate(elements):
+
+        if i % 100 == 0 and i > 0:
+            print('querying shbf_x and cms: {0}'.format(i))
 
         query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
         cursor.execute(query)
         result = cursor.fetchall()[0][0]
 
         if result == counts[i]:
-            good += 1
-        elif result > counts[i]:
-            bad += 1
-        elif result < counts[i]:
-            wrong += 1
+            exact_shbf_x += 1
+        else:
+            bad_shbf_x += 1
 
-    # Printing results
-    print('ShBF_X test results:')
-    print('good: {0}'.format(good))
-    print('bad: {0}'.format(bad))
-    print('wrong: {0}'.format(wrong))
-    print('====================================')
+        query = "SELECT query_cms(cms_column, '{0}') from cms_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
 
-    # Cleaning up
+        if result == counts[i]:
+            exact_cms += 1
+        else:
+            bad_cms += 1
+
+    exact_percentage_shbf_x = float((exact_shbf_x / n) * 100)
+    exact_percentage_cms = float((exact_cms / n) * 100)
+
+    print('Exact % ShBF_X:  {0}'.format(exact_percentage_shbf_x))
+    print('Exact % CMS:     {0}'.format(exact_percentage_cms))
+    
     cursor.execute('DROP TABLE shbf_x_table')
+    cursor.execute('DROP TABLE cms_table')
     cursor.execute('DROP EXTENSION shbf')
     connection.commit()
 
