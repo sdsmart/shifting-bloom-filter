@@ -106,12 +106,13 @@ def test_bf(connection):
     # Querying other elements that were not inserted into the bloom filter
     for i, e in enumerate(elements_2):
         break #TODO
+
         if i % 10000 == 0 and i > 0:
             print('iteration: {0}'.format(i))
 
         query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
-        #cursor.execute(query)
-        #result = cursor.fetchall()[0][0]
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
 
         false_positives += result
         true_negatives -= result
@@ -192,12 +193,13 @@ def test_shbf_m(connection):
     # Querying other elements that were not inserted into the bloom filter
     for i, e in enumerate(elements_2):
         break #TODO
+
         if i % 10000 == 0 and i > 0:
             print('iteration: {0}'.format(i))
 
         query = "SELECT query_shbf_m(shbf_m_column, '{0}') from shbf_m_table".format(e)
-        #cursor.execute(query)
-        #result = cursor.fetchall()[0][0]
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
 
         false_positives += result
         true_negatives -= result
