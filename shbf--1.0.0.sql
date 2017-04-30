@@ -44,6 +44,7 @@ CREATE FUNCTION query_cms(cms, text)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+
 /* TODO */
 CREATE TYPE bf;
 
@@ -90,6 +91,7 @@ CREATE FUNCTION query_bf(bf, cstring)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+
 /* TODO */
 CREATE TYPE shbf;
 
@@ -121,6 +123,7 @@ CREATE TYPE shbf (
     storage = extended
 );
 
+
 /* TODO */
 CREATE FUNCTION new_shbf_m(integer, integer)
     RETURNS shbf
@@ -136,6 +139,7 @@ CREATE FUNCTION query_shbf_m(shbf, cstring)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
+
 
 /* TODO */
 CREATE FUNCTION new_shbf_a(integer, integer)
@@ -153,5 +157,20 @@ CREATE FUNCTION query_shbf_a(shbf, cstring)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+
 /* TODO */
+CREATE FUNCTION new_shbf_x(integer, integer, integer)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+	    
+CREATE FUNCTION insert_shbf_x(shbf, cstring, integer)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;	
+	
+CREATE FUNCTION query_shbf_x(shbf, cstring)
+    RETURNS integer
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
 

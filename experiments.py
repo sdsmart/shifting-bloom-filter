@@ -18,8 +18,6 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
-    test_bf(connection)
-    test_shbf_m(connection)
 
     # Closing the database connection
     connection.close()
@@ -121,7 +119,8 @@ def test_bf(connection):
     print('False positives: {0}'.format(false_positives))
     print('------------------------------------') 
     print('====================================')
-
+ 
+    # Cleaning up
     cursor.execute('DROP TABLE bf_table')
     cursor.execute('DROP EXTENSION shbf')
     connection.commit()
@@ -219,7 +218,67 @@ def test_shbf_m(connection):
     print('------------------------------------')
     print('====================================')
 
+    # Cleaning up
     cursor.execute('DROP TABLE shbf_m_table')
+    cursor.execute('DROP EXTENSION shbf')
+    connection.commit()
+
+
+# TODO
+def exp_shbf_x_correctness_rate(connection):    
+
+    m = 120000
+    n = 10000
+    max_x = 57
+
+    result = 0
+    good = 0
+    bad = 0
+    wrong = 0
+
+    num_in_elements = n
+
+    elements = generate_elements(n)
+    counts = [random.randint(1, max_x) for i in range(n)]
+  
+    # Creating postgres extension and an empty bloom filter
+    cursor = connection.cursor()
+    cursor.execute('CREATE EXTENSION shbf')
+    cursor.execute('CREATE TABLE shbf_x_table (shbf_x_column shbf)')
+    cursor.execute('INSERT INTO shbf_x_table VALUES (new_shbf_x({0}, {1}, {2}))'.format(m, n, max_x))
+    connection.commit()
+
+    # Inserting elements
+    for i, e in enumerate(elements):
+
+        query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
+        cursor.execute(query)
+
+    connection.commit()
+
+    # Querying the inserted elements
+    for i, e in enumerate(elements):
+
+        query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
+
+        if result == counts[i]:
+            good += 1
+        elif result > counts[i]:
+            bad += 1
+        elif result < counts[i]:
+            wrong += 1
+
+    # Printing results
+    print('ShBF_X test results:')
+    print('good: {0}'.format(good))
+    print('bad: {0}'.format(bad))
+    print('wrong: {0}'.format(wrong))
+    print('====================================')
+
+    # Cleaning up
+    cursor.execute('DROP TABLE shbf_x_table')
     cursor.execute('DROP EXTENSION shbf')
     connection.commit()
 
