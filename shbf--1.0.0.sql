@@ -138,7 +138,20 @@ CREATE FUNCTION query_shbf_m(shbf, cstring)
     LANGUAGE C STRICT IMMUTABLE;
 
 /* TODO */
-
+CREATE FUNCTION new_shbf_a(integer, integer)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;
+	    
+CREATE FUNCTION insert_shbf_a(shbf, cstring, integer, integer)
+    RETURNS shbf
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE;	
+	
+CREATE FUNCTION query_shbf_a(shbf, cstring)
+    RETURNS integer
+    AS 'MODULE_PATHNAME'
+    LANGUAGE C STRICT IMMUTABLE;
 
 /* TODO */
 

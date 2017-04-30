@@ -74,6 +74,9 @@ PG_FUNCTION_INFO_V1(cms_send);
 PG_FUNCTION_INFO_V1(new_shbf_m);
 PG_FUNCTION_INFO_V1(insert_shbf_m);
 PG_FUNCTION_INFO_V1(query_shbf_m);
+PG_FUNCTION_INFO_V1(new_shbf_a);
+PG_FUNCTION_INFO_V1(insert_shbf_a);
+PG_FUNCTION_INFO_V1(query_shbf_a);
 PG_FUNCTION_INFO_V1(shbf_input);
 PG_FUNCTION_INFO_V1(shbf_output);
 PG_FUNCTION_INFO_V1(shbf_receive);
@@ -367,6 +370,52 @@ Datum query_shbf_m(PG_FUNCTION_ARGS) {
     int result = 0;
 
     result = query_ShBF_M(shbf_m, item);
+ 
+    PG_RETURN_INT32(result);
+}
+
+
+/* TODO */
+Datum new_shbf_a(PG_FUNCTION_ARGS) {
+    int m = PG_GETARG_INT32(0);
+    int n = PG_GETARG_INT32(1);
+
+    ShBF* shbf_a = new_ShBF_A(m, n);
+
+    print_ShBF(shbf_a);
+
+    PG_RETURN_POINTER(shbf_a);
+}
+
+
+/* TODO */
+Datum insert_shbf_a(PG_FUNCTION_ARGS) {
+
+    ShBF* shbf_a = NULL;
+    char* new_item = 0;
+    int s1 = 0;
+    int s2 = 0;
+
+    shbf_a = (ShBF*) PG_GETARG_VARLENA_P(0);
+    
+    new_item = PG_GETARG_CSTRING(1);
+    s1 = PG_GETARG_INT32(2);
+    s2 = PG_GETARG_INT32(3);
+
+    insert_ShBF_A(shbf_a, new_item, s1, s2);
+
+    PG_RETURN_POINTER(shbf_a);
+}
+
+
+/* TODO */
+Datum query_shbf_a(PG_FUNCTION_ARGS) {
+
+    ShBF* shbf_a = (ShBF*) PG_GETARG_VARLENA_P(0);
+    char* item = PG_GETARG_CSTRING(1);
+    int result = 0;
+
+    result = query_ShBF_A(shbf_a, item);
  
     PG_RETURN_INT32(result);
 }
