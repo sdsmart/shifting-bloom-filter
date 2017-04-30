@@ -18,20 +18,8 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
-    start = time.time()
     test_bf(connection)
-    end = time.time()
-    elapsed_time_bf = end - start
-    print('\nTime: {0}\n'.format(elapsed_time_bf))
-
-    start = time.time()
     test_shbf_m(connection)
-    end = time.time()
-    elapsed_time_shbf_m = end - start
-    print('\nTime: {0}\n'.format(elapsed_time_shbf_m))
-
-    difference = elapsed_time_bf - elapsed_time_shbf_m
-    print('Time difference: {0}'.format(difference))
 
     # Closing the database connection
     connection.close()
@@ -49,16 +37,16 @@ def test_bf(connection):
     print('============ TESTING BF ============')
 
     # Setting up local variables
-    num_elements_1 = 10000
+    m = 120000
+    n = 10000
+
+    num_elements_1 = n
     num_elements_2 = 100000
     num_total_elements = num_elements_1 + num_elements_2
 
     total_elements = generate_elements(num_total_elements)
     elements_1 = total_elements[:num_elements_1]
     elements_2 = total_elements[num_elements_1:]
-
-    m = 100000
-    n = num_elements_1
 
     true_positives = 0
     false_negatives = num_elements_1
@@ -75,14 +63,22 @@ def test_bf(connection):
 
     # --- TEST 1 ---
 
+    start = time.time()
+
     # Inserting elements into bloom filter
-    for e in elements_1:
+    for i, e in enumerate(elements_1):
+
+        if i % 1000 == 0 and i > 0:
+            print('iteration: {0}'.format(i))
 
         query = '''UPDATE bf_table
-                       SET bf_column = insert_bf(bf_column, '{0}')'''.format(e)
+                       SET bf_column = insert_bf(bf_column, '{0}')'''.format(e) 
         cursor.execute(query)
 
     connection.commit()
+
+    end = time.time()
+    print('BF insertion time: {0}'.format(end - start))
     
     # Querying the inserted elements to confirm that the bloom filter returns true
     for e in elements_1:
@@ -90,7 +86,8 @@ def test_bf(connection):
         query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
         cursor.execute(query)
         result = cursor.fetchall()[0][0]
-        break #TODO
+        
+        #break
 
         true_positives += result
         false_negatives -= result
@@ -105,7 +102,8 @@ def test_bf(connection):
 
     # Querying other elements that were not inserted into the bloom filter
     for i, e in enumerate(elements_2):
-        break #TODO
+
+        #break
 
         if i % 10000 == 0 and i > 0:
             print('iteration: {0}'.format(i))
@@ -136,16 +134,16 @@ def test_shbf_m(connection):
     print('========== TESTING ShBF_M ==========')
 
     # Setting up local variables
-    num_elements_1 = 10000
+    m = 120000
+    n = 10000
+
+    num_elements_1 = n
     num_elements_2 = 100000
     num_total_elements = num_elements_1 + num_elements_2
 
     total_elements = generate_elements(num_total_elements)
     elements_1 = total_elements[:num_elements_1]
     elements_2 = total_elements[num_elements_1:]
-
-    m = 100000
-    n = num_elements_1
 
     true_positives = 0
     false_negatives = num_elements_1
@@ -162,14 +160,22 @@ def test_shbf_m(connection):
 
     # --- TEST 1 ---
 
+    start = time.time()
+
     # Inserting elements into bloom filter
-    for e in elements_1:
+    for i, e in enumerate(elements_1):
+
+        if i % 1000 == 0 and i > 0:
+            print('iteration: {0}'.format(i))
 
         query = '''UPDATE shbf_m_table
-                       SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')'''.format(e)
+                       SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')'''.format(e) 
         cursor.execute(query)
 
     connection.commit()
+
+    end = time.time()
+    print('ShBF_M insertion time: {0}'.format(end - start))
     
     # Querying the inserted elements to confirm that the bloom filter returns true
     for e in elements_1:
@@ -177,7 +183,8 @@ def test_shbf_m(connection):
         query = "SELECT query_shbf_m(shbf_m_column, '{0}') from shbf_m_table".format(e)
         cursor.execute(query)
         result = cursor.fetchall()[0][0]
-        break #TODO
+        
+        #break
 
         true_positives += result
         false_negatives -= result
@@ -192,7 +199,8 @@ def test_shbf_m(connection):
 
     # Querying other elements that were not inserted into the bloom filter
     for i, e in enumerate(elements_2):
-        break #TODO
+
+        #break
 
         if i % 10000 == 0 and i > 0:
             print('iteration: {0}'.format(i))

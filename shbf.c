@@ -142,6 +142,8 @@ Datum new_bf(PG_FUNCTION_ARGS) {
 
     BF* bf = new_BF(m, n);
 
+    print_BF(bf);
+
     PG_RETURN_POINTER(bf);
 }
 
@@ -335,6 +337,8 @@ Datum new_shbf_m(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_m = new_ShBF_M(m, n);
 
+    print_ShBF(shbf_m);
+
     PG_RETURN_POINTER(shbf_m);
 }
 
@@ -485,7 +489,7 @@ int query_BF(BF* bf, char* e) {
         if (get_bit_BF(bf, index) != 1) { return 0; }
     } 
 
-    print_BF(bf);
+    //print_BF(bf);
 
     return 1;
 }
@@ -782,7 +786,7 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
         }
     }
 
-    print_ShBF(shbf_m);
+    //print_ShBF(shbf_m);
 
     return 1;
 }
