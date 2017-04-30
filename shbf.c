@@ -1089,7 +1089,7 @@ void print_BF(BF* bf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
-    ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
+    //ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
 
     printf("======= BF Contents =======\n");
     printf("Number of 1's: %d\n", ones);
@@ -1118,7 +1118,7 @@ void print_ShBF(ShBF* shbf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
-    ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("test")));
+    //ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
     
     printf("====== ShBF Contents ======\n");
     printf("Number of 1's: %d\n", ones);
