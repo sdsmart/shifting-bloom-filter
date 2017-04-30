@@ -424,7 +424,7 @@ BF* new_BF(int m, int n) {
     int B_size;
     Size bf_size;
 
-    k_unrounded = (K_OPT_BF * ((float)m / n)) / 2;
+    k_unrounded = (K_OPT_BF * ((float)m / n));
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
     if (k == 0) { k = 1; }
@@ -463,8 +463,6 @@ void insert_BF(BF* bf, char* e) {
    
         set_bit_BF(bf, index);
     }
-
-    print_BF(bf);
 }
 
 
@@ -484,9 +482,10 @@ int query_BF(BF* bf, char* e) {
 
         index = i_hash % bf->m;
     
-        print_BF(bf);
         if (get_bit_BF(bf, index) != 1) { return 0; }
     } 
+
+    print_BF(bf);
 
     return 1;
 }
@@ -700,7 +699,7 @@ ShBF* new_ShBF_M(int m, int n) {
     int B_size;
     Size shbf_size;
 
-    k_unrounded = K_OPT_SHBF_M * ((float)m / n);
+    k_unrounded = K_OPT_SHBF_M * ((float)m / n) / 2;
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
     if (k == 0) { k = 1; }
@@ -782,6 +781,8 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
             return 0;
         }
     }
+
+    print_ShBF(shbf_m);
 
     return 1;
 }
@@ -1088,6 +1089,8 @@ void print_BF(BF* bf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
+    ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
+
     printf("======= BF Contents =======\n");
     printf("Number of 1's: %d\n", ones);
     printf("Number of 0's: %d\n", zeros);
@@ -1115,6 +1118,8 @@ void print_ShBF(ShBF* shbf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
+    ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("test")));
+    
     printf("====== ShBF Contents ======\n");
     printf("Number of 1's: %d\n", ones);
     printf("Number of 0's: %d\n", zeros);
