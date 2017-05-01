@@ -19,8 +19,9 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
-    exp_shbf_x_accuracy(connection)
-    exp_shbf_x_time(connection)
+    #exp_shbf_x_accuracy(connection)
+    #exp_shbf_x_time(connection)
+    exp_shbf_a_accuracy(connection)
 
     # Closing the database connection
     connection.close()
@@ -230,16 +231,303 @@ def test_shbf_m(connection):
 # TODO
 def exp_shbf_a_accuracy(connection):
 
-    num_s1_only_elements = 100
-    num_s2_only_elements = 100
-    num_both_elements = 100
-    num_total_elements = num_s1_only_elements + num_s2_only_elements + num_both_elements
+    m = 150000
+    n = 9999
+
+    num_s1_only_elements = n / 3
+    num_s2_only_elements = n / 3
+    num_both_elements = n / 3
 
     num_s1_elements = num_s1_only_elements + num_both_elements
     num_s2_elements = num_s2_only_elements + num_both_elements
 
     s1_only_elements = generate_elements(num_s1_only_elements)
     s2_only_elements = generate_elements(num_s2_only_elements)
+    both_elements = generate_elements(num_both_elements)
+
+    s1_elements = s1_only_elements + both_elements
+    s2_elements = s2_only_elements + both_elements
+
+    cursor = connection.cursor()
+    cursor.execute('CREATE EXTENSION shbf')
+    cursor.execute('CREATE TABLE shbf_a_table (shbf_a_column shbf)')
+    cursor.execute('INSERT INTO shbf_a_table VALUES (new_shbf_a({0}, {1}))'.format(m, n))
+    cursor.execute('CREATE TABLE bf_table_1 (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table_1 VALUES (new_bf({0}, {1}))'.format(m, n)) 
+    cursor.execute('CREATE TABLE bf_table_2 (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table_2 VALUES (new_bf({0}, {1}))'.format(m, n))
+    connection.commit()
+
+    print('inserting shbf_a elements...')
+
+    for i, e in enumerate(s1_only_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 0)".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(s2_only_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 0, 1)".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(both_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
+        cursor.execute(query)
+
+    print('inserting ibf elements...')
+
+    for i, e in enumerate(s1_elements):
+
+        query = "UPDATE bf_table_1 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(s2_elements):
+
+        query = "UPDATE bf_table_2 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
+        cursor.execute(query)
+
+    connection.commit()
+
+    print('querying shbf_a elements...')
+
+    result = 0
+    clear_shbf_a = 0
+    unclear_shbf_a = 0
+
+    for i, e in enumerate(s1_only_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 1:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    for i, e in enumerate(s2_only_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 0:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    for i, e in enumerate(both_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 2:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    print('querying ibf elements...')
+
+    result_1 = 0
+    result_2 = 0
+    clear_ibf = 0
+    unclear_ibf = 0
+
+    for i, e in enumerate(s1_only_elements):
+
+        query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
+        query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
+
+        cursor.execute(query1)
+        result_1 = cursor.fetchone()[0]
+
+        cursor.execute(query2)
+        result_2 = cursor.fetchone()[0]
+
+        if result_1 == 1 and result_2 == 0:
+            clear_ibf += 1
+        else:
+            unclear_ibf += 1
+
+    for i, e in enumerate(s2_only_elements):
+
+        query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
+        query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
+
+        cursor.execute(query1)
+        result_1 = cursor.fetchone()[0]
+
+        cursor.execute(query2)
+        result_2 = cursor.fetchone()[0]
+
+        if result_1 == 0 and result_2 == 1:
+            clear_ibf += 1
+        else:
+            unclear_ibf += 1
+
+    unclear_ibf += num_both_elements
+
+    print('shbf_a clear answer %:   {0}'.format(float((clear_shbf_a / n) * 100)))
+    print('ibf clear answer %:      {0}'.format(float((clear_ibf / n) * 100)))
+
+    cursor.execute('DROP TABLE shbf_a_table')
+    cursor.execute('DROP TABLE bf_table_1')
+    cursor.execute('DROP TABLE bf_table_2')
+    cursor.execute('DROP EXTENSION shbf')
+    connection.commit()
+
+
+# TODO
+def exp_shbf_a_time(connection):
+
+    m = 150000
+    n = 9999
+
+    num_s1_only_elements = n / 3
+    num_s2_only_elements = n / 3
+    num_both_elements = n / 3
+
+    num_s1_elements = num_s1_only_elements + num_both_elements
+    num_s2_elements = num_s2_only_elements + num_both_elements
+
+    s1_only_elements = generate_elements(num_s1_only_elements)
+    s2_only_elements = generate_elements(num_s2_only_elements)
+    both_elements = generate_elements(num_both_elements)
+
+    s1_elements = s1_only_elements + both_elements
+    s2_elements = s2_only_elements + both_elements
+
+    cursor = connection.cursor()
+    cursor.execute('CREATE EXTENSION shbf')
+    cursor.execute('CREATE TABLE shbf_a_table (shbf_a_column shbf)')
+    cursor.execute('INSERT INTO shbf_a_table VALUES (new_shbf_a({0}, {1}))'.format(m, n))
+    cursor.execute('CREATE TABLE bf_table_1 (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table_1 VALUES (new_bf({0}, {1}))'.format(m, n)) 
+    cursor.execute('CREATE TABLE bf_table_2 (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table_2 VALUES (new_bf({0}, {1}))'.format(m, n))
+    connection.commit()
+
+    print('inserting shbf_a elements...')
+
+    for i, e in enumerate(s1_only_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 0)".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(s2_only_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 0, 1)".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(both_elements):
+
+        query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
+        cursor.execute(query)
+
+    print('inserting ibf elements...')
+
+    for i, e in enumerate(s1_elements):
+
+        query = "UPDATE bf_table_1 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
+        cursor.execute(query)
+
+    for i, e in enumerate(s2_elements):
+
+        query = "UPDATE bf_table_2 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
+        cursor.execute(query)
+
+    connection.commit()
+
+    print('querying shbf_a elements...')
+
+    result = 0
+    clear_shbf_a = 0
+    unclear_shbf_a = 0
+
+    for i, e in enumerate(s1_only_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 1:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    for i, e in enumerate(s2_only_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 0:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    for i, e in enumerate(both_elements):
+
+        query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+
+        if result == 2:
+            clear_shbf_a += 1
+        else:
+            unclear_shbf_a += 1
+
+    print('querying ibf elements...')
+
+    result_1 = 0
+    result_2 = 0
+    clear_ibf = 0
+    unclear_ibf = 0
+
+    for i, e in enumerate(s1_only_elements):
+
+        query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
+        query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
+
+        cursor.execute(query1)
+        result_1 = cursor.fetchone()[0]
+
+        cursor.execute(query2)
+        result_2 = cursor.fetchone()[0]
+
+        if result_1 == 1 and result_2 == 0:
+            clear_ibf += 1
+        else:
+            unclear_ibf += 1
+
+    for i, e in enumerate(s2_only_elements):
+
+        query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
+        query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
+
+        cursor.execute(query1)
+        result_1 = cursor.fetchone()[0]
+
+        cursor.execute(query2)
+        result_2 = cursor.fetchone()[0]
+
+        if result_1 == 0 and result_2 == 1:
+            clear_ibf += 1
+        else:
+            unclear_ibf += 1
+
+    unclear_ibf += num_both_elements
+
+    print('shbf_a clear answer %:   {0}'.format(float((clear_shbf_a / n) * 100)))
+    print('ibf clear answer %:      {0}'.format(float((clear_ibf / n) * 100)))
+
+    cursor.execute('DROP TABLE shbf_a_table')
+    cursor.execute('DROP TABLE bf_table_1')
+    cursor.execute('DROP TABLE bf_table_2')
+    cursor.execute('DROP EXTENSION shbf')
+    connection.commit()
 
 
 # TODO
