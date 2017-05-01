@@ -20,14 +20,14 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
-    #shbf_m_accuracy_results = exp_shbf_m_accuracy(connection)
-    #print(shbf_m_accuracy_results)
-    #shbf_m_time_results = exp_shbf_m_time(connection)
-    #print(shbf_m_time_results)
-    #shbf_a_accuracy_results = exp_shbf_a_accuracy(connection)
-    #print(shbf_a_accuracy_results)
-    #shbf_a_time_results = exp_shbf_a_time(connection)
-    #print(shbf_a_time_results)
+    shbf_m_accuracy_results = exp_shbf_m_accuracy(connection)
+    print(shbf_m_accuracy_results)
+    shbf_m_time_results = exp_shbf_m_time(connection)
+    print(shbf_m_time_results)
+    shbf_a_accuracy_results = exp_shbf_a_accuracy(connection)
+    print(shbf_a_accuracy_results)
+    shbf_a_time_results = exp_shbf_a_time(connection)
+    print(shbf_a_time_results)
     shbf_x_accuracy_results = exp_shbf_x_accuracy(connection)
     print(shbf_x_accuracy_results)
     shbf_x_time_results = exp_shbf_x_time(connection)
@@ -619,7 +619,7 @@ def exp_shbf_x_accuracy(connection):
         elements = generate_elements(n)
         counts = [random.randint(1, max_x) for i in range(n)]
       
-        confidence_level = 0.50
+        confidence_level = 0.10
         d = math.log(1 / (1 - confidence_level))
         w = ((m * 5) / CMS_UNIT_SIZE_IN_BITS) / d
         error_bound = math.e / w
@@ -722,7 +722,7 @@ def exp_shbf_x_time(connection):
         elements = generate_elements(n)
         counts = [random.randint(1, max_x) for i in range(n)]
       
-        confidence_level = 0.50
+        confidence_level = 0.10
         d = math.log(1 / (1 - confidence_level))
         w = ((m * 5) / CMS_UNIT_SIZE_IN_BITS) / d
         error_bound = math.e / w
