@@ -12,6 +12,7 @@ import math
 MAX_ELEMENT = 9999999999
 CMS_UNIT_SIZE_IN_BITS = 32
 
+
 # Main function
 def main():
    
@@ -20,10 +21,10 @@ def main():
 
     # Performing experiments
     #exp_shbf_m_accuracy(connection)
-    exp_shbf_m_time(connection)
+    #exp_shbf_m_time(connection)
     #exp_shbf_a_accuracy(connection)
     #exp_shbf_a_time(connection)
-    #exp_shbf_x_accuracy(connection)
+    exp_shbf_x_accuracy(connection)
     #exp_shbf_x_time(connection)
 
     # Closing the database connection
@@ -38,6 +39,8 @@ def main():
 # TODO
 def exp_shbf_m_accuracy(connection):
     
+    print('running shbf_m accuracy experiment:')
+
     m = 150000
     n = 10000
     o = n * 10
@@ -109,8 +112,94 @@ def exp_shbf_m_accuracy(connection):
         if result == 1:
             false_positives_bf += 1
 
+    print('\nresults:')
     print('shbf_m false positive %: {0}'.format(float((false_positives_shbf_m / o) * 100)))
-    print('bf false positive %:     {0}'.format(float((false_positives_bf / o) * 100)))
+    print('bf false positive %:     {0}\n'.format(float((false_positives_bf / o) * 100)))
+
+    cursor.execute('DROP TABLE shbf_m_table')
+    cursor.execute('DROP TABLE bf_table')
+    cursor.execute('DROP EXTENSION shbf')
+    connection.commit()
+
+
+# TODO
+def exp_shbf_m_time(connection):
+
+    print('running shbf_m time experiment:')
+
+    m = 150000
+    n = 10000
+    o = n * 10
+
+    total_elements = generate_elements(n + o)
+    n_elements = total_elements[:n]
+    o_elements = total_elements[n:]
+
+    cursor = connection.cursor()
+    cursor.execute('CREATE EXTENSION shbf')
+    cursor.execute('CREATE TABLE shbf_m_table (shbf_m_column shbf)')
+    cursor.execute('INSERT INTO shbf_m_table VALUES (new_shbf_m({0}, {1}))'.format(m, n))
+    cursor.execute('CREATE TABLE bf_table (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table VALUES (new_bf({0}, {1}))'.format(m, n))
+    connection.commit()
+
+    print('inserting shbf_m elements...')
+
+    for i, e in enumerate(n_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+
+        query = "UPDATE shbf_m_table SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')".format(e) 
+        cursor.execute(query)
+ 
+    print('inserting bf elements...')
+
+    for i, e in enumerate(n_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+
+        query = "UPDATE bf_table SET bf_column = insert_bf(bf_column, '{0}')".format(e) 
+        cursor.execute(query)
+
+    connection.commit()
+
+    print('querying shbf_m elements...')
+
+    start = time.time()
+
+    for i, e in enumerate(total_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+
+        query = "SELECT query_shbf_m(shbf_m_column, '{0}') from shbf_m_table".format(e)
+        cursor.execute(query)
+
+    end = time.time()
+
+    shbf_m_time = end - start
+
+    print('querying bf elements...')
+
+    start = time.time()
+
+    for i, e in enumerate(total_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+
+        query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
+        cursor.execute(query)
+
+    end = time.time()
+
+    bf_time = end - start
+
+    print('\nresults:')
+    print('shbf_m time: {0}'.format(shbf_m_time))
+    print('bf time:     {0}\n'.format(bf_time))
 
     cursor.execute('DROP TABLE shbf_m_table')
     cursor.execute('DROP TABLE bf_table')
@@ -120,6 +209,8 @@ def exp_shbf_m_accuracy(connection):
 
 # TODO
 def exp_shbf_a_accuracy(connection):
+
+    print('running shbf_a accuracy experiment:')
 
     m = 150000
     n = 9999
@@ -289,8 +380,9 @@ def exp_shbf_a_accuracy(connection):
 
     unclear_ibf += num_both_elements
 
+    print('\nresults:')
     print('shbf_a clear answer %:   {0}'.format(float((clear_shbf_a / n) * 100)))
-    print('ibf clear answer %:      {0}'.format(float((clear_ibf / n) * 100)))
+    print('ibf clear answer %:      {0}\n'.format(float((clear_ibf / n) * 100)))
 
     cursor.execute('DROP TABLE shbf_a_table')
     cursor.execute('DROP TABLE bf_table_1')
@@ -302,8 +394,10 @@ def exp_shbf_a_accuracy(connection):
 # TODO
 def exp_shbf_a_time(connection):
 
-    m = 1500000
-    n = 99999
+    print('running shbf_a time experiment:')
+
+    m = 150000
+    n = 9999
 
     num_s1_only_elements = n / 3
     num_s2_only_elements = n / 3
@@ -445,8 +539,9 @@ def exp_shbf_a_time(connection):
 
     ibf_time = end - start
 
+    print('\nresults:')
     print('shbf_a time: {0}'.format(shbf_a_time))
-    print('ibf time: {0}'.format(ibf_time))
+    print('ibf time: {0}\n'.format(ibf_time))
 
     cursor.execute('DROP TABLE shbf_a_table')
     cursor.execute('DROP TABLE bf_table_1')
@@ -458,6 +553,8 @@ def exp_shbf_a_time(connection):
 # TODO
 def exp_shbf_x_accuracy(connection):    
 
+    print('running shbf_x accuracy experiment:')
+
     m = 15000
     n = 1000
     max_x = 57
@@ -465,9 +562,9 @@ def exp_shbf_x_accuracy(connection):
     elements = generate_elements(n)
     counts = [random.randint(1, max_x) for i in range(n)]
   
-    confidence_level = 0.05
+    confidence_level = 0.50
     d = math.log(1 / (1 - confidence_level))
-    w = (m / CMS_UNIT_SIZE_IN_BITS) / d
+    w = ((m * 5) / CMS_UNIT_SIZE_IN_BITS) / d
     error_bound = math.e / w
 
     cursor = connection.cursor()
@@ -488,7 +585,7 @@ def exp_shbf_x_accuracy(connection):
         query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
         cursor.execute(query)
 
-    print('inerting cms elements...')
+    print('inserting cms elements...')
 
     for i, e in enumerate(elements):
 
@@ -536,8 +633,9 @@ def exp_shbf_x_accuracy(connection):
     exact_percentage_shbf_x = float((exact_shbf_x / n) * 100)
     exact_percentage_cms = float((exact_cms / n) * 100)
 
+    print('\nresults:')
     print('Exact % ShBF_X:  {0}'.format(exact_percentage_shbf_x))
-    print('Exact % CMS:     {0}'.format(exact_percentage_cms))
+    print('Exact % CMS:     {0}\n'.format(exact_percentage_cms))
     
     cursor.execute('DROP TABLE shbf_x_table')
     cursor.execute('DROP TABLE cms_table')
@@ -548,6 +646,8 @@ def exp_shbf_x_accuracy(connection):
 #TODO
 def exp_shbf_x_time(connection):    
 
+    print('running shbf_x time experiment:')
+
     m = 15000
     n = 1000
     max_x = 57
@@ -555,9 +655,9 @@ def exp_shbf_x_time(connection):
     elements = generate_elements(n)
     counts = [random.randint(1, max_x) for i in range(n)]
   
-    confidence_level = 0.05
+    confidence_level = 0.50
     d = math.log(1 / (1 - confidence_level))
-    w = (m / CMS_UNIT_SIZE_IN_BITS) / d
+    w = ((m * 5) / CMS_UNIT_SIZE_IN_BITS) / d
     error_bound = math.e / w
 
     cursor = connection.cursor()
@@ -628,6 +728,7 @@ def exp_shbf_x_time(connection):
 
     cms_time = end - start
 
+    print('\nresults:')
     print('shbf_x time: {0}'.format(shbf_x_time))
     print('cms time: {0}'.format(cms_time))
 
