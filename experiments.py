@@ -22,16 +22,16 @@ def main():
     # Performing experiments
     shbf_m_accuracy_results = exp_shbf_m_accuracy(connection)
     print(shbf_m_accuracy_results)
-    shbf_m_time_results = exp_shbf_m_time(connection)
-    print(shbf_m_time_results)
-    shbf_a_accuracy_results = exp_shbf_a_accuracy(connection)
-    print(shbf_a_accuracy_results)
-    shbf_a_time_results = exp_shbf_a_time(connection)
-    print(shbf_a_time_results)
-    shbf_x_accuracy_results = exp_shbf_x_accuracy(connection)
-    print(shbf_x_accuracy_results)
-    shbf_x_time_results = exp_shbf_x_time(connection)
-    print(shbf_x_time_results)
+    #shbf_m_time_results = exp_shbf_m_time(connection)
+    #print(shbf_m_time_results)
+    #shbf_a_accuracy_results = exp_shbf_a_accuracy(connection)
+    #print(shbf_a_accuracy_results)
+    #shbf_a_time_results = exp_shbf_a_time(connection)
+    #print(shbf_a_time_results)
+    #shbf_x_accuracy_results = exp_shbf_x_accuracy(connection)
+    #print(shbf_x_accuracy_results)
+    #shbf_x_time_results = exp_shbf_x_time(connection)
+    #print(shbf_x_time_results)
 
     # Closing the database connection
     connection.close()
@@ -47,7 +47,7 @@ def exp_shbf_m_accuracy(connection):
     
     print('running shbf_m accuracy experiment:')
 
-    x_values = [2000*i for i in range(1, 6)]
+    x_values = [1000*i for i in range(1, 11)]
     shbf_m_y_values = []
     bf_y_values = []
 
