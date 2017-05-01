@@ -19,9 +19,12 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
+    #exp_shbf_m_accuracy(connection)
+    exp_shbf_m_time(connection)
+    #exp_shbf_a_accuracy(connection)
+    #exp_shbf_a_time(connection)
     #exp_shbf_x_accuracy(connection)
     #exp_shbf_x_time(connection)
-    exp_shbf_a_accuracy(connection)
 
     # Closing the database connection
     connection.close()
@@ -33,197 +36,84 @@ def main():
 
 
 # TODO
-def test_bf(connection):
+def exp_shbf_m_accuracy(connection):
     
-    # Printing test header
-    print('============ TESTING BF ============')
-
-    # Setting up local variables
-    m = 120000
+    m = 150000
     n = 10000
+    o = n * 10
 
-    num_elements_1 = n
-    num_elements_2 = 100000
-    num_total_elements = num_elements_1 + num_elements_2
+    total_elements = generate_elements(n + o)
+    n_elements = total_elements[:n]
+    o_elements = total_elements[n:]
 
-    total_elements = generate_elements(num_total_elements)
-    elements_1 = total_elements[:num_elements_1]
-    elements_2 = total_elements[num_elements_1:]
-
-    true_positives = 0
-    false_negatives = num_elements_1
-    false_positives = 0
-    true_negatives = num_elements_2
-    result = 0
-
-    # Creating postgres extension and an empty bloom filter
-    cursor = connection.cursor()
-    cursor.execute('CREATE EXTENSION shbf')
-    cursor.execute('CREATE TABLE bf_table (bf_column bf)')
-    cursor.execute('INSERT INTO bf_table VALUES (new_bf({0}, {1}))'.format(m, n))
-    connection.commit()
-
-    # --- TEST 1 ---
-
-    start = time.time()
-
-    # Inserting elements into bloom filter
-    for i, e in enumerate(elements_1):
-
-        if i % 1000 == 0 and i > 0:
-            print('iteration: {0}'.format(i))
-
-        query = '''UPDATE bf_table
-                       SET bf_column = insert_bf(bf_column, '{0}')'''.format(e) 
-        cursor.execute(query)
-
-    connection.commit()
-
-    end = time.time()
-    print('BF insertion time: {0}'.format(end - start))
-    
-    # Querying the inserted elements to confirm that the bloom filter returns true
-    for e in elements_1:
-
-        query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
-        cursor.execute(query)
-        result = cursor.fetchall()[0][0]
-        
-        #break
-
-        true_positives += result
-        false_negatives -= result
-
-    # Printing results of TEST 1
-    print('---------- TEST 1 RESULTS ----------')
-    print('True positives: {0}'.format(true_positives))
-    print('False negatives: {0}'.format(false_negatives))
-    print('------------------------------------\n')
-
-    # --- TEST 2 ---
-
-    # Querying other elements that were not inserted into the bloom filter
-    for i, e in enumerate(elements_2):
-
-        #break
-
-        if i % 10000 == 0 and i > 0:
-            print('iteration: {0}'.format(i))
-
-        query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
-        cursor.execute(query)
-        result = cursor.fetchall()[0][0]
-
-        false_positives += result
-        true_negatives -= result
-
-    # Printing results of TEST 2
-    print('\n---------- TEST 2 RESULTS ----------')
-    print('True negatives: {0}'.format(true_negatives))
-    print('False positives: {0}'.format(false_positives))
-    print('------------------------------------') 
-    print('====================================')
- 
-    # Cleaning up
-    cursor.execute('DROP TABLE bf_table')
-    cursor.execute('DROP EXTENSION shbf')
-    connection.commit()
-
-
-# TODO
-def test_shbf_m(connection):
-    
-    # Printing test header
-    print('========== TESTING ShBF_M ==========')
-
-    # Setting up local variables
-    m = 120000
-    n = 10000
-
-    num_elements_1 = n
-    num_elements_2 = 100000
-    num_total_elements = num_elements_1 + num_elements_2
-
-    total_elements = generate_elements(num_total_elements)
-    elements_1 = total_elements[:num_elements_1]
-    elements_2 = total_elements[num_elements_1:]
-
-    true_positives = 0
-    false_negatives = num_elements_1
-    false_positives = 0
-    true_negatives = num_elements_2
-    result = 0
-
-    # Creating postgres extension and an empty bloom filter
     cursor = connection.cursor()
     cursor.execute('CREATE EXTENSION shbf')
     cursor.execute('CREATE TABLE shbf_m_table (shbf_m_column shbf)')
     cursor.execute('INSERT INTO shbf_m_table VALUES (new_shbf_m({0}, {1}))'.format(m, n))
+    cursor.execute('CREATE TABLE bf_table (bf_column bf)')
+    cursor.execute('INSERT INTO bf_table VALUES (new_bf({0}, {1}))'.format(m, n))
     connection.commit()
 
-    # --- TEST 1 ---
+    print('inserting shbf_m elements...')
 
-    start = time.time()
+    for i, e in enumerate(n_elements):
 
-    # Inserting elements into bloom filter
-    for i, e in enumerate(elements_1):
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
 
-        if i % 1000 == 0 and i > 0:
-            print('iteration: {0}'.format(i))
+        query = "UPDATE shbf_m_table SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')".format(e) 
+        cursor.execute(query)
+ 
+    print('inserting bf elements...')
 
-        query = '''UPDATE shbf_m_table
-                       SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')'''.format(e) 
+    for i, e in enumerate(n_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+
+        query = "UPDATE bf_table SET bf_column = insert_bf(bf_column, '{0}')".format(e) 
         cursor.execute(query)
 
     connection.commit()
 
-    end = time.time()
-    print('ShBF_M insertion time: {0}'.format(end - start))
-    
-    # Querying the inserted elements to confirm that the bloom filter returns true
-    for e in elements_1:
+    print('querying shbf_m elements...')
+
+    result = 0
+    false_positives_shbf_m = 0
+
+    for i, e in enumerate(o_elements):
+
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
 
         query = "SELECT query_shbf_m(shbf_m_column, '{0}') from shbf_m_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
-        
-        #break
+        result = cursor.fetchone()[0]
 
-        true_positives += result
-        false_negatives -= result
+        if result == 1:
+            false_positives_shbf_m += 1
 
-    # Printing results of TEST 1
-    print('---------- TEST 1 RESULTS ----------')
-    print('True positives: {0}'.format(true_positives))
-    print('False negatives: {0}'.format(false_negatives))
-    print('------------------------------------\n')
-    
-    # --- TEST 2 ---
+    print('querying bf elements...')
 
-    # Querying other elements that were not inserted into the bloom filter
-    for i, e in enumerate(elements_2):
+    false_positives_bf = 0
 
-        #break
+    for i, e in enumerate(o_elements):
 
-        if i % 10000 == 0 and i > 0:
-            print('iteration: {0}'.format(i))
+        #if i % 1000 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
 
-        query = "SELECT query_shbf_m(shbf_m_column, '{0}') from shbf_m_table".format(e)
+        query = "SELECT query_bf(bf_column, '{0}') from bf_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
+        result = cursor.fetchone()[0]
 
-        false_positives += result
-        true_negatives -= result
+        if result == 1:
+            false_positives_bf += 1
 
-    # Printing results of TEST 2
-    print('\n---------- TEST 2 RESULTS ----------')
-    print('True negatives: {0}'.format(true_negatives))
-    print('False positives: {0}'.format(false_positives))
-    print('------------------------------------')
-    print('====================================')
+    print('shbf_m false positive %: {0}'.format(float((false_positives_shbf_m / o) * 100)))
+    print('bf false positive %:     {0}'.format(float((false_positives_bf / o) * 100)))
 
-    # Cleaning up
     cursor.execute('DROP TABLE shbf_m_table')
+    cursor.execute('DROP TABLE bf_table')
     cursor.execute('DROP EXTENSION shbf')
     connection.commit()
 
@@ -262,16 +152,25 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 0)".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 0, 1)".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(both_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
         cursor.execute(query)
 
@@ -279,11 +178,17 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s1_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE bf_table_1 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(s2_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE bf_table_2 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
         cursor.execute(query)
 
@@ -297,6 +202,9 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
         result = cursor.fetchone()[0]
@@ -308,6 +216,9 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
         result = cursor.fetchone()[0]
@@ -319,6 +230,9 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(both_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
         result = cursor.fetchone()[0]
@@ -337,6 +251,9 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
         query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
 
@@ -353,6 +270,9 @@ def exp_shbf_a_accuracy(connection):
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
         query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
 
@@ -382,8 +302,8 @@ def exp_shbf_a_accuracy(connection):
 # TODO
 def exp_shbf_a_time(connection):
 
-    m = 150000
-    n = 9999
+    m = 1500000
+    n = 99999
 
     num_s1_only_elements = n / 3
     num_s2_only_elements = n / 3
@@ -413,16 +333,25 @@ def exp_shbf_a_time(connection):
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 0)".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 0, 1)".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(both_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
         cursor.execute(query)
 
@@ -430,11 +359,17 @@ def exp_shbf_a_time(connection):
 
     for i, e in enumerate(s1_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE bf_table_1 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
         cursor.execute(query)
 
     for i, e in enumerate(s2_elements):
-
+        
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "UPDATE bf_table_2 SET bf_column = insert_bf(bf_column, '{0}')".format(e)
         cursor.execute(query)
 
@@ -442,86 +377,76 @@ def exp_shbf_a_time(connection):
 
     print('querying shbf_a elements...')
 
-    result = 0
-    clear_shbf_a = 0
-    unclear_shbf_a = 0
+    start = time.time()
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchone()[0]
-
-        if result == 1:
-            clear_shbf_a += 1
-        else:
-            unclear_shbf_a += 1
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchone()[0]
-
-        if result == 0:
-            clear_shbf_a += 1
-        else:
-            unclear_shbf_a += 1
 
     for i, e in enumerate(both_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query = "SELECT query_shbf_a(shbf_a_column, '{0}') from shbf_a_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchone()[0]
 
-        if result == 2:
-            clear_shbf_a += 1
-        else:
-            unclear_shbf_a += 1
+    end = time.time()
+
+    shbf_a_time = end - start
 
     print('querying ibf elements...')
 
-    result_1 = 0
-    result_2 = 0
-    clear_ibf = 0
-    unclear_ibf = 0
+    start = time.time()
 
     for i, e in enumerate(s1_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
         query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
-
         cursor.execute(query1)
-        result_1 = cursor.fetchone()[0]
-
         cursor.execute(query2)
-        result_2 = cursor.fetchone()[0]
-
-        if result_1 == 1 and result_2 == 0:
-            clear_ibf += 1
-        else:
-            unclear_ibf += 1
 
     for i, e in enumerate(s2_only_elements):
 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
+        
         query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
         query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
-
         cursor.execute(query1)
-        result_1 = cursor.fetchone()[0]
-
         cursor.execute(query2)
-        result_2 = cursor.fetchone()[0]
+    
+    for i, e in enumerate(both_elements):
+ 
+        #if i % 100 == 0 and i > 0:
+        #    print('iteration: {0}'.format(i))
 
-        if result_1 == 0 and result_2 == 1:
-            clear_ibf += 1
-        else:
-            unclear_ibf += 1
+        query1 = "SELECT query_bf(bf_column, '{0}') from bf_table_1".format(e) 
+        query2 = "SELECT query_bf(bf_column, '{0}') from bf_table_2".format(e)
+        cursor.execute(query1)
+        cursor.execute(query2) 
 
-    unclear_ibf += num_both_elements
+    end = time.time()
 
-    print('shbf_a clear answer %:   {0}'.format(float((clear_shbf_a / n) * 100)))
-    print('ibf clear answer %:      {0}'.format(float((clear_ibf / n) * 100)))
+    ibf_time = end - start
+
+    print('shbf_a time: {0}'.format(shbf_a_time))
+    print('ibf time: {0}'.format(ibf_time))
 
     cursor.execute('DROP TABLE shbf_a_table')
     cursor.execute('DROP TABLE bf_table_1')
@@ -558,7 +483,7 @@ def exp_shbf_x_accuracy(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('inserting into shbf_x: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
         
         query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
         cursor.execute(query)
@@ -568,7 +493,7 @@ def exp_shbf_x_accuracy(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('inserting into cms: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
         
         for j in range(counts[i]):
 
@@ -588,11 +513,11 @@ def exp_shbf_x_accuracy(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('querying shbf_x and cms: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
 
         query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
+        result = cursor.fetchone()[0]
 
         if result == counts[i]:
             exact_shbf_x += 1
@@ -601,7 +526,7 @@ def exp_shbf_x_accuracy(connection):
 
         query = "SELECT query_cms(cms_column, '{0}') from cms_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
+        result = cursor.fetchone()[0]
 
         if result == counts[i]:
             exact_cms += 1
@@ -648,7 +573,7 @@ def exp_shbf_x_time(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('inserting into shbf_x: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
         
         query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
         cursor.execute(query)
@@ -658,7 +583,7 @@ def exp_shbf_x_time(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('inserting into cms: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
         
         for j in range(counts[i]):
 
@@ -676,11 +601,11 @@ def exp_shbf_x_time(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('querying shbf_x and cms: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
 
         query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
+        result = cursor.fetchone()[0]
     
     end = time.time()
 
@@ -693,11 +618,11 @@ def exp_shbf_x_time(connection):
     for i, e in enumerate(elements):
 
         #if i % 100 == 0 and i > 0:
-        #    print('querying shbf_x and cms: {0}'.format(i))
+        #    print('iteration: {0}'.format(i))
 
         query = "SELECT query_cms(cms_column, '{0}') from cms_table".format(e)
         cursor.execute(query)
-        result = cursor.fetchall()[0][0]
+        result = cursor.fetchone()[0]
     
     end = time.time()
 
