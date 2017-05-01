@@ -19,7 +19,8 @@ def main():
     connection = get_db_connection()
 
     # Performing experiments
-    exp_shbf_x_correctness_rate(connection)
+    exp_shbf_x_accuracy(connection)
+    exp_shbf_x_time(connection)
 
     # Closing the database connection
     connection.close()
@@ -227,7 +228,22 @@ def test_shbf_m(connection):
 
 
 # TODO
-def exp_shbf_x_correctness_rate(connection):    
+def exp_shbf_a_accuracy(connection):
+
+    num_s1_only_elements = 100
+    num_s2_only_elements = 100
+    num_both_elements = 100
+    num_total_elements = num_s1_only_elements + num_s2_only_elements + num_both_elements
+
+    num_s1_elements = num_s1_only_elements + num_both_elements
+    num_s2_elements = num_s2_only_elements + num_both_elements
+
+    s1_only_elements = generate_elements(num_s1_only_elements)
+    s2_only_elements = generate_elements(num_s2_only_elements)
+
+
+# TODO
+def exp_shbf_x_accuracy(connection):    
 
     m = 15000
     n = 1000
@@ -241,10 +257,6 @@ def exp_shbf_x_correctness_rate(connection):
     w = (m / CMS_UNIT_SIZE_IN_BITS) / d
     error_bound = math.e / w
 
-    print('error bound: {0}'.format(error_bound))
-    print('confidence_level: {0}'.format(confidence_level))
-    print('cms size: {0}'.format(round(w * d * CMS_UNIT_SIZE_IN_BITS)))
-
     cursor = connection.cursor()
     cursor.execute('CREATE EXTENSION shbf')
     cursor.execute('CREATE TABLE shbf_x_table (shbf_x_column shbf)')
@@ -253,18 +265,22 @@ def exp_shbf_x_correctness_rate(connection):
     cursor.execute('INSERT INTO cms_table VALUES (new_cms({0}, {1}))'.format(error_bound, confidence_level))
     connection.commit()
 
+    print('inserting shbf_x elements...')
+
     for i, e in enumerate(elements):
 
-        if i % 100 == 0 and i > 0:
-            print('inserting into shbf_x: {0}'.format(i))
+        #if i % 100 == 0 and i > 0:
+        #    print('inserting into shbf_x: {0}'.format(i))
         
         query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
         cursor.execute(query)
 
+    print('inerting cms elements...')
+
     for i, e in enumerate(elements):
 
-        if i % 100 == 0 and i > 0:
-            print('inserting into cms: {0}'.format(i))
+        #if i % 100 == 0 and i > 0:
+        #    print('inserting into cms: {0}'.format(i))
         
         for j in range(counts[i]):
 
@@ -279,10 +295,12 @@ def exp_shbf_x_correctness_rate(connection):
     exact_cms = 0
     bad_cms = 0
 
+    print('querying elements...')
+
     for i, e in enumerate(elements):
 
-        if i % 100 == 0 and i > 0:
-            print('querying shbf_x and cms: {0}'.format(i))
+        #if i % 100 == 0 and i > 0:
+        #    print('querying shbf_x and cms: {0}'.format(i))
 
         query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
         cursor.execute(query)
@@ -308,6 +326,98 @@ def exp_shbf_x_correctness_rate(connection):
     print('Exact % ShBF_X:  {0}'.format(exact_percentage_shbf_x))
     print('Exact % CMS:     {0}'.format(exact_percentage_cms))
     
+    cursor.execute('DROP TABLE shbf_x_table')
+    cursor.execute('DROP TABLE cms_table')
+    cursor.execute('DROP EXTENSION shbf')
+    connection.commit()
+
+
+#TODO
+def exp_shbf_x_time(connection):    
+
+    m = 15000
+    n = 1000
+    max_x = 57
+
+    elements = generate_elements(n)
+    counts = [random.randint(1, max_x) for i in range(n)]
+  
+    confidence_level = 0.05
+    d = math.log(1 / (1 - confidence_level))
+    w = (m / CMS_UNIT_SIZE_IN_BITS) / d
+    error_bound = math.e / w
+
+    cursor = connection.cursor()
+    cursor.execute('CREATE EXTENSION shbf')
+    cursor.execute('CREATE TABLE shbf_x_table (shbf_x_column shbf)')
+    cursor.execute('INSERT INTO shbf_x_table VALUES (new_shbf_x({0}, {1}, {2}))'.format(m, n, max_x))
+    cursor.execute('CREATE TABLE cms_table (cms_column cms)')
+    cursor.execute('INSERT INTO cms_table VALUES (new_cms({0}, {1}))'.format(error_bound, confidence_level))
+    connection.commit()
+
+    print('inserting shbf_x elements...')
+
+    for i, e in enumerate(elements):
+
+        #if i % 100 == 0 and i > 0:
+        #    print('inserting into shbf_x: {0}'.format(i))
+        
+        query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
+        cursor.execute(query)
+
+    print('inserting cms elements...')
+
+    for i, e in enumerate(elements):
+
+        #if i % 100 == 0 and i > 0:
+        #    print('inserting into cms: {0}'.format(i))
+        
+        for j in range(counts[i]):
+
+            query = "UPDATE cms_table SET cms_column = insert_cms(cms_column, '{0}')".format(e)
+            cursor.execute(query)
+
+    connection.commit()
+
+    result = 0
+
+    print('querying shbf_x elements...')
+
+    start = time.time()
+    
+    for i, e in enumerate(elements):
+
+        #if i % 100 == 0 and i > 0:
+        #    print('querying shbf_x and cms: {0}'.format(i))
+
+        query = "SELECT query_shbf_x(shbf_x_column, '{0}') from shbf_x_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
+    
+    end = time.time()
+
+    shbf_x_time = end - start
+
+    print('querying cms elements...')
+
+    start = time.time()
+
+    for i, e in enumerate(elements):
+
+        #if i % 100 == 0 and i > 0:
+        #    print('querying shbf_x and cms: {0}'.format(i))
+
+        query = "SELECT query_cms(cms_column, '{0}') from cms_table".format(e)
+        cursor.execute(query)
+        result = cursor.fetchall()[0][0]
+    
+    end = time.time()
+
+    cms_time = end - start
+
+    print('shbf_x time: {0}'.format(shbf_x_time))
+    print('cms time: {0}'.format(cms_time))
+
     cursor.execute('DROP TABLE shbf_x_table')
     cursor.execute('DROP TABLE cms_table')
     cursor.execute('DROP EXTENSION shbf')
