@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 # Imports
 import psycopg2
 import random
@@ -22,17 +21,29 @@ def main():
     # Performing experiments
     getcontext().prec = 4
     #shbf_m_accuracy_results = exp_shbf_m_accuracy(connection)
-    #print_results(shbf_m_accuracy_results)
+    #print('\nresults:')
+    #print('shbf_m false positive rates: {0}'.format(shbf_m_accuracy_results[1]))
+    #print('bf false positive rates:     {0}'.format(shbf_m_accuracy_results[2]))
     #shbf_m_time_results = exp_shbf_m_time(connection)
-    #print_results(shbf_m_time_results)
+    #print('\nresults:')
+    #print('shbf_m average query times: {0}'.format(shbf_m_time_results[1]))
+    #print('bf average query times:     {0}'.format(shbf_m_time_results[2]))
     #shbf_a_accuracy_results = exp_shbf_a_accuracy(connection)
-    #print_results(shbf_a_accuracy_results)
+    #print('\nresults:')
+    #print('shbf_a clear answer rates:   {0}'.format(shbf_a_accuracy_results[1]))
+    #print('ibf clear answer rates:      {0}'.format(shbf_a_accuracy_results[2]))
     #shbf_a_time_results = exp_shbf_a_time(connection)
-    #print_results(shbf_a_time_results)
+    #print('\nresults:')
+    #print('shbf_a average query times:  {0}'.format(shbf_a_time_results[1]))
+    #print('ibf average query times:     {0}'.format(shbf_a_time_results[2]))
     #shbf_x_accuracy_results = exp_shbf_x_accuracy(connection)
-    #print_results(shbf_x_accuracy_results)
+    #print('\nresults:')
+    #print('shbf_x exact answer rate:    {0}'.format(shbf_x_accuracy_results[1]))
+    #print('cms exact answer rate:       {0}'.format(shbf_x_accuracy_results[2]))
     shbf_x_time_results = exp_shbf_x_time(connection)
-    print_results(shbf_x_time_results)
+    print('\nresults:')
+    print('shbf_x average query times:  {0}'.format(shbf_x_time_results[1]))
+    print('cms average query times:     {0}'.format(shbf_x_time_results[2]))
 
     # Closing the database connection
     connection.close()
@@ -56,7 +67,7 @@ def exp_shbf_m_accuracy(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         o = 20000
     
@@ -72,7 +83,7 @@ def exp_shbf_m_accuracy(connection):
         cursor.execute('INSERT INTO bf_table VALUES (new_bf({0}, {1}))'.format(m, n))
         connection.commit()
     
-        print('inserting shbf_m elements...')
+        #print('inserting shbf_m elements...')
     
         for i, e in enumerate(n_elements):
     
@@ -82,7 +93,7 @@ def exp_shbf_m_accuracy(connection):
             query = "UPDATE shbf_m_table SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')".format(e) 
             cursor.execute(query)
      
-        print('inserting bf elements...')
+        #print('inserting bf elements...')
     
         for i, e in enumerate(n_elements):
     
@@ -94,7 +105,7 @@ def exp_shbf_m_accuracy(connection):
     
         connection.commit()
     
-        print('querying shbf_m elements...')
+        #print('querying shbf_m elements...')
     
         result = 0
         false_positives_shbf_m = 0
@@ -111,7 +122,7 @@ def exp_shbf_m_accuracy(connection):
             if result == 1:
                 false_positives_shbf_m += 1
     
-        print('querying bf elements...')
+        #print('querying bf elements...')
     
         false_positives_bf = 0
     
@@ -130,9 +141,9 @@ def exp_shbf_m_accuracy(connection):
         shbf_m_false_positive_percentage = (Decimal(false_positives_shbf_m) / Decimal(o)) * Decimal(100) 
         bf_false_positive_percentage = (Decimal(false_positives_bf) / Decimal(o)) * Decimal(100)
 
-        print('\nresults:')
-        print('shbf_m false positive %: {0}'.format(shbf_m_false_positive_percentage))
-        print('bf false positive %:     {0}\n'.format(bf_false_positive_percentage))
+        #print('\nresults:')
+        #print('shbf_m false positive %: {0}'.format(shbf_m_false_positive_percentage))
+        #print('bf false positive %:     {0}\n'.format(bf_false_positive_percentage))
  
         shbf_m_y_values.append(str(shbf_m_false_positive_percentage))
         bf_y_values.append(str(bf_false_positive_percentage))
@@ -156,7 +167,7 @@ def exp_shbf_m_time(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         m = n * 15
         o = n * 3
@@ -173,7 +184,7 @@ def exp_shbf_m_time(connection):
         cursor.execute('INSERT INTO bf_table VALUES (new_bf({0}, {1}))'.format(m, n))
         connection.commit()
     
-        print('inserting shbf_m elements...')
+        #print('inserting shbf_m elements...')
     
         for i, e in enumerate(n_elements):
     
@@ -183,7 +194,7 @@ def exp_shbf_m_time(connection):
             query = "UPDATE shbf_m_table SET shbf_m_column = insert_shbf_m(shbf_m_column, '{0}')".format(e) 
             cursor.execute(query)
      
-        print('inserting bf elements...')
+        #print('inserting bf elements...')
     
         for i, e in enumerate(n_elements):
     
@@ -195,7 +206,7 @@ def exp_shbf_m_time(connection):
     
         connection.commit()
     
-        print('querying shbf_m elements...')
+        #print('querying shbf_m elements...')
     
         start = time.time()
     
@@ -211,7 +222,7 @@ def exp_shbf_m_time(connection):
     
         shbf_m_time = (Decimal(end - start) / Decimal(n + o)) * Decimal(1000)
     
-        print('querying bf elements...')
+        #print('querying bf elements...')
     
         start = time.time()
     
@@ -227,9 +238,9 @@ def exp_shbf_m_time(connection):
 
         bf_time = (Decimal(end - start) / Decimal(n + o)) * Decimal(1000)
 
-        print('\nresults:')
-        print('shbf_m time: {0}'.format(shbf_m_time))
-        print('bf time:     {0}\n'.format(bf_time))
+        #print('\nresults:')
+        #print('shbf_m time: {0}'.format(shbf_m_time))
+        #print('bf time:     {0}\n'.format(bf_time))
     
         shbf_m_y_values.append(str(shbf_m_time))
         bf_y_values.append(str(bf_time))
@@ -256,7 +267,7 @@ def exp_shbf_a_accuracy(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         num_s1_only_elements = int(n / 3)
         num_s2_only_elements = int(n / 3)
@@ -282,7 +293,7 @@ def exp_shbf_a_accuracy(connection):
         cursor.execute('INSERT INTO bf_table_2 VALUES (new_bf({0}, {1}))'.format(m_ibf, num_s2_elements))
         connection.commit()
     
-        print('inserting shbf_a elements...')
+        #print('inserting shbf_a elements...')
     
         for i, e in enumerate(s1_only_elements):
     
@@ -308,7 +319,7 @@ def exp_shbf_a_accuracy(connection):
             query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
             cursor.execute(query)
     
-        print('inserting ibf elements...')
+        #print('inserting ibf elements...')
     
         for i, e in enumerate(s1_elements):
     
@@ -328,7 +339,7 @@ def exp_shbf_a_accuracy(connection):
     
         connection.commit()
     
-        print('querying shbf_a elements...')
+        #print('querying shbf_a elements...')
     
         result = 0
         clear_shbf_a = 0
@@ -376,7 +387,7 @@ def exp_shbf_a_accuracy(connection):
             else:
                 unclear_shbf_a += 1
     
-        print('querying ibf elements...')
+        #print('querying ibf elements...')
     
         result_1 = 0
         result_2 = 0
@@ -426,9 +437,9 @@ def exp_shbf_a_accuracy(connection):
         shbf_a_clear_answer_percentage = Decimal(clear_shbf_a / n) * Decimal(100)
         ibf_clear_answer_percentage = Decimal(clear_ibf / n) * Decimal(100)
 
-        print('\nresults:')
-        print('shbf_a clear answer %:   {0}'.format(shbf_a_clear_answer_percentage))
-        print('ibf clear answer %:      {0}\n'.format(ibf_clear_answer_percentage))
+        #print('\nresults:')
+        #print('shbf_a clear answer %:   {0}'.format(shbf_a_clear_answer_percentage))
+        #print('ibf clear answer %:      {0}\n'.format(ibf_clear_answer_percentage))
 
         shbf_a_y_values.append(str(shbf_a_clear_answer_percentage))
         ibf_y_values.append(str(ibf_clear_answer_percentage))
@@ -453,7 +464,7 @@ def exp_shbf_a_time(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         m = 15 * n
     
@@ -483,7 +494,7 @@ def exp_shbf_a_time(connection):
         cursor.execute('INSERT INTO bf_table_2 VALUES (new_bf({0}, {1}))'.format(m_ibf, num_s2_elements))
         connection.commit()
     
-        print('inserting shbf_a elements...')
+        #print('inserting shbf_a elements...')
     
         for i, e in enumerate(s1_only_elements):
     
@@ -509,7 +520,7 @@ def exp_shbf_a_time(connection):
             query = "UPDATE shbf_a_table SET shbf_a_column = insert_shbf_a(shbf_a_column, '{0}', 1, 1)".format(e)
             cursor.execute(query)
     
-        print('inserting ibf elements...')
+        #print('inserting ibf elements...')
     
         for i, e in enumerate(s1_elements):
     
@@ -529,7 +540,7 @@ def exp_shbf_a_time(connection):
     
         connection.commit()
     
-        print('querying shbf_a elements...')
+        #print('querying shbf_a elements...')
     
         start = time.time()
     
@@ -561,7 +572,7 @@ def exp_shbf_a_time(connection):
     
         shbf_a_time = (Decimal(end - start) / Decimal(n)) * Decimal(1000)
     
-        print('querying ibf elements...')
+        #print('querying ibf elements...')
     
         start = time.time()
     
@@ -599,9 +610,9 @@ def exp_shbf_a_time(connection):
     
         ibf_time = (Decimal(end - start) / Decimal(n)) * Decimal(1000)
     
-        print('\nresults:')
-        print('shbf_a time: {0}'.format(shbf_a_time))
-        print('ibf time: {0}\n'.format(ibf_time))
+        #print('\nresults:')
+        #print('shbf_a time: {0}'.format(shbf_a_time))
+        #print('ibf time: {0}\n'.format(ibf_time))
 
         shbf_a_y_values.append(str(shbf_a_time))
         ibf_y_values.append(str(ibf_time))
@@ -626,7 +637,7 @@ def exp_shbf_x_accuracy(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         m = 15 * n
         max_x = 57
@@ -647,7 +658,7 @@ def exp_shbf_x_accuracy(connection):
         cursor.execute('INSERT INTO cms_table VALUES (new_cms({0}, {1}))'.format(error_bound, confidence_level))
         connection.commit()
     
-        print('inserting shbf_x elements...')
+        #print('inserting shbf_x elements...')
     
         for i, e in enumerate(elements):
     
@@ -657,7 +668,7 @@ def exp_shbf_x_accuracy(connection):
             query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
             cursor.execute(query)
     
-        print('inserting cms elements...')
+        #print('inserting cms elements...')
     
         for i, e in enumerate(elements):
     
@@ -677,7 +688,7 @@ def exp_shbf_x_accuracy(connection):
         exact_cms = 0
         bad_cms = 0
     
-        print('querying elements...')
+        #print('querying elements...')
     
         for i, e in enumerate(elements):
     
@@ -705,9 +716,9 @@ def exp_shbf_x_accuracy(connection):
         exact_percentage_shbf_x = Decimal(exact_shbf_x / n) * Decimal(100)
         exact_percentage_cms = Decimal(exact_cms / n) * Decimal(100)
     
-        print('\nresults:')
-        print('exact % shbf_x:  {0}'.format(exact_percentage_shbf_x))
-        print('exact % cms:     {0}\n'.format(exact_percentage_cms))
+        #print('\nresults:')
+        #print('exact % shbf_x:  {0}'.format(exact_percentage_shbf_x))
+        #print('exact % cms:     {0}\n'.format(exact_percentage_cms))
 
         shbf_x_y_values.append(str(exact_percentage_shbf_x))
         cms_y_values.append(str(exact_percentage_cms))
@@ -731,7 +742,7 @@ def exp_shbf_x_time(connection):
 
     for i, n in enumerate(x_values):
 
-        print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
+        #print('iteration: {0} out of {1}'.format(i + 1, len(x_values)))
 
         m = 15 * n
         max_x = 57
@@ -752,7 +763,7 @@ def exp_shbf_x_time(connection):
         cursor.execute('INSERT INTO cms_table VALUES (new_cms({0}, {1}))'.format(error_bound, confidence_level))
         connection.commit()
     
-        print('inserting shbf_x elements...')
+        #print('inserting shbf_x elements...')
     
         for i, e in enumerate(elements):
     
@@ -762,7 +773,7 @@ def exp_shbf_x_time(connection):
             query = "UPDATE shbf_x_table SET shbf_x_column = insert_shbf_x(shbf_x_column, '{0}', {1})".format(e, counts[i])
             cursor.execute(query)
     
-        print('inserting cms elements...')
+        #print('inserting cms elements...')
     
         for i, e in enumerate(elements):
     
@@ -778,7 +789,7 @@ def exp_shbf_x_time(connection):
     
         result = 0
     
-        print('querying shbf_x elements...')
+        #print('querying shbf_x elements...')
     
         start = time.time()
         
@@ -795,7 +806,7 @@ def exp_shbf_x_time(connection):
     
         shbf_x_time = (Decimal(end - start) / Decimal(n)) * Decimal(1000)
     
-        print('querying cms elements...')
+        #print('querying cms elements...')
     
         start = time.time()
     
@@ -812,9 +823,9 @@ def exp_shbf_x_time(connection):
     
         cms_time = (Decimal(end - start) / Decimal(n)) * Decimal(1000)
     
-        print('\nresults:')
-        print('shbf_x time: {0}'.format(shbf_x_time))
-        print('cms time: {0}\n'.format(cms_time))
+        #print('\nresults:')
+        #print('shbf_x time: {0}'.format(shbf_x_time))
+        #print('cms time: {0}\n'.format(cms_time))
    
         shbf_x_y_values.append(str(shbf_x_time))
         cms_y_values.append(str(cms_time))
