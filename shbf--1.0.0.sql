@@ -1,6 +1,7 @@
-/* TODO */
+/* -------- COUNT MIN SKETCH ------- */
 CREATE TYPE cms;
 
+/* CMS basic functions */
 CREATE FUNCTION cms_input(cstring)
     RETURNS cms
     AS 'MODULE_PATHNAME'
@@ -21,6 +22,7 @@ CREATE FUNCTION cms_send(cms)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+/* CMS type definition */
 CREATE TYPE cms (
     input = cms_input,
     output = cms_output,
@@ -29,25 +31,29 @@ CREATE TYPE cms (
     storage = extended
 );
 
+/* Create a new CMS */
 CREATE FUNCTION new_cms(double precision default 0.001, double precision default 0.99)
     RETURNS cms
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
-	    
+	
+/* Insert data into a CMS */    
 CREATE FUNCTION insert_cms(cms, text)
     RETURNS cms
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
 	
+/* Query a CMS */
 CREATE FUNCTION query_cms(cms, text)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
 
-/* TODO */
+/* -------- BLOOM FILTER ------- */
 CREATE TYPE bf;
 
+/* CMS basic functions */
 CREATE FUNCTION bf_input(cstring)
     RETURNS bf
     AS 'MODULE_PATHNAME'
@@ -68,6 +74,7 @@ CREATE FUNCTION bf_send(bf)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+/* BF type definition */
 CREATE TYPE bf (
     input = bf_input,
     output = bf_output,
@@ -76,25 +83,29 @@ CREATE TYPE bf (
     storage = extended
 );
 
+/* Create a new BF */
 CREATE FUNCTION new_bf(integer, integer)
     RETURNS bf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
-	    
+	   
+/* Insert data into a BF */	   
 CREATE FUNCTION insert_bf(bf, cstring)
     RETURNS bf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
-	
+
+/* Query a BF */
 CREATE FUNCTION query_bf(bf, cstring)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
 
-/* TODO */
+/* -------- GENERAL SHIFTING BLOOM FILTER ------- */
 CREATE TYPE shbf;
 
+/* ShBF basic functions */
 CREATE FUNCTION shbf_input(cstring)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
@@ -115,6 +126,7 @@ CREATE FUNCTION shbf_send(shbf)
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
+/* ShBF type definition */
 CREATE TYPE shbf (
     input = shbf_input,
     output = shbf_output,
@@ -124,51 +136,57 @@ CREATE TYPE shbf (
 );
 
 
-/* TODO */
+/* Create a new ShBF for membership */
 CREATE FUNCTION new_shbf_m(integer, integer)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 	    
+/* Insert data into a ShBF_M */
 CREATE FUNCTION insert_shbf_m(shbf, cstring)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
-	
+
+/* Query a ShBF_M */
 CREATE FUNCTION query_shbf_m(shbf, cstring)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
 
-/* TODO */
+/* Create a new ShBF for association */
 CREATE FUNCTION new_shbf_a(integer, integer)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 	    
+/* Insert data into a ShBF_A */
 CREATE FUNCTION insert_shbf_a(shbf, cstring, integer, integer)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
 	
+/* Query a ShBF_A */
 CREATE FUNCTION query_shbf_a(shbf, cstring)
     RETURNS integer
     AS 'MODULE_PATHNAME'
     LANGUAGE C STRICT IMMUTABLE;
 
 
-/* TODO */
+/* Create a new ShBF for multiplicity */
 CREATE FUNCTION new_shbf_x(integer, integer, integer)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;
 	    
+/* Insert data into a ShBF_X */
 CREATE FUNCTION insert_shbf_x(shbf, cstring, integer)
     RETURNS shbf
     AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE;	
-	
+
+/* Query a ShBF_X */	
 CREATE FUNCTION query_shbf_x(shbf, cstring)
     RETURNS integer
     AS 'MODULE_PATHNAME'

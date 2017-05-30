@@ -140,7 +140,7 @@ char* generate_element(void);
 /* --- Bloom Filter Functions --- */
 
 
-/* TODO */
+/* Wrapper for creating a new BF */
 Datum new_bf(PG_FUNCTION_ARGS) {
 
     int m = PG_GETARG_INT32(0);
@@ -154,7 +154,7 @@ Datum new_bf(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for inserting data into a BF */
 Datum insert_bf(PG_FUNCTION_ARGS) {
 
     BF* bf = NULL;
@@ -170,7 +170,7 @@ Datum insert_bf(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for querying a BF */
 Datum query_bf(PG_FUNCTION_ARGS) {
 
     BF* bf = (BF*) PG_GETARG_VARLENA_P(0);
@@ -183,7 +183,7 @@ Datum query_bf(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic input function for BF */
 Datum bf_input(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
@@ -192,7 +192,7 @@ Datum bf_input(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic output function for BF */
 Datum bf_output(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
@@ -201,7 +201,7 @@ Datum bf_output(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic receive function for BF */
 Datum bf_receive(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
@@ -210,7 +210,7 @@ Datum bf_receive(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic send function for BF */
 Datum bf_send(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
@@ -222,7 +222,7 @@ Datum bf_send(PG_FUNCTION_ARGS) {
 /* --- Count Min Sketch Fuctions --- */
 
 
-/* TODO */
+/* Wrapper for creating a new CMS */
 Datum new_cms(PG_FUNCTION_ARGS) {
 
     float8 errorBound = PG_GETARG_FLOAT8(0);
@@ -234,7 +234,7 @@ Datum new_cms(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for inserting data into a CMS */
 Datum insert_cms(PG_FUNCTION_ARGS) {
 
     CMS* currentCms = NULL;
@@ -275,7 +275,7 @@ Datum insert_cms(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for querying a CMS */
 Datum query_cms(PG_FUNCTION_ARGS) {
 
     CMS* cms = (CMS*) PG_GETARG_VARLENA_P(0);
@@ -297,7 +297,7 @@ Datum query_cms(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic input function for CMS */
 Datum cms_input(PG_FUNCTION_ARGS)
 {
 	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
@@ -306,7 +306,7 @@ Datum cms_input(PG_FUNCTION_ARGS)
 }
 
 
-/* TODO */
+/* Basic output function for CMS */
 Datum cms_output(PG_FUNCTION_ARGS)
 {
 	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
@@ -315,7 +315,7 @@ Datum cms_output(PG_FUNCTION_ARGS)
 }
 
 
-/* TODO */
+/* Basic receive function for CMS */
 Datum cms_receive(PG_FUNCTION_ARGS)
 {
 	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
@@ -324,7 +324,7 @@ Datum cms_receive(PG_FUNCTION_ARGS)
 }
 
 
-/* TODO */
+/* Basic send function for CMS */
 Datum cms_send(PG_FUNCTION_ARGS)
 {
 	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
@@ -336,7 +336,7 @@ Datum cms_send(PG_FUNCTION_ARGS)
 /* --- Shifting Bloom Filter Functions --- */
 
 
-/* TODO */
+/* Wrapper for creating a new ShBF_M */
 Datum new_shbf_m(PG_FUNCTION_ARGS) {
     int m = PG_GETARG_INT32(0);
     int n = PG_GETARG_INT32(1);
@@ -349,7 +349,7 @@ Datum new_shbf_m(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for inserting data into a ShBF_M */
 Datum insert_shbf_m(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_m = NULL;
@@ -365,7 +365,7 @@ Datum insert_shbf_m(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for querying a ShBF_M */
 Datum query_shbf_m(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_m = (ShBF*) PG_GETARG_VARLENA_P(0);
@@ -378,7 +378,7 @@ Datum query_shbf_m(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for creating a new ShBF_A */
 Datum new_shbf_a(PG_FUNCTION_ARGS) {
     int m = PG_GETARG_INT32(0);
     int n = PG_GETARG_INT32(1);
@@ -391,7 +391,7 @@ Datum new_shbf_a(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for inserting data into a ShBF_A */
 Datum insert_shbf_a(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_a = NULL;
@@ -411,7 +411,7 @@ Datum insert_shbf_a(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for querying a ShBF_A */
 Datum query_shbf_a(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_a = (ShBF*) PG_GETARG_VARLENA_P(0);
@@ -424,7 +424,7 @@ Datum query_shbf_a(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for creating a new ShBF_X */
 Datum new_shbf_x(PG_FUNCTION_ARGS) {
     int m = PG_GETARG_INT32(0);
     int n = PG_GETARG_INT32(1);
@@ -438,7 +438,7 @@ Datum new_shbf_x(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for inserting data into a ShBF_X */
 Datum insert_shbf_x(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_x = NULL;
@@ -455,7 +455,7 @@ Datum insert_shbf_x(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Wrapper for querying a ShBF_X */
 Datum query_shbf_x(PG_FUNCTION_ARGS) {
 
     ShBF* shbf_x = (ShBF*) PG_GETARG_VARLENA_P(0);
@@ -468,7 +468,7 @@ Datum query_shbf_x(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic input function for ShBF */
 Datum shbf_input(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteain, PG_GETARG_DATUM(0));
@@ -477,7 +477,7 @@ Datum shbf_input(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic output function for ShBF */
 Datum shbf_output(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteaout, PG_GETARG_DATUM(0));
@@ -486,7 +486,7 @@ Datum shbf_output(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic receive function for ShBF */
 Datum shbf_receive(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(bytearecv, PG_GETARG_DATUM(0));
@@ -495,7 +495,7 @@ Datum shbf_receive(PG_FUNCTION_ARGS) {
 }
 
 
-/* TODO */
+/* Basic send function for ShBF */
 Datum shbf_send(PG_FUNCTION_ARGS) {
 
 	Datum datum = DirectFunctionCall1(byteasend, PG_GETARG_DATUM(0));
@@ -524,6 +524,7 @@ BF* new_BF(int m, int n) {
     int B_size;
     Size bf_size;
 
+	/* Calculate the k */
     k_unrounded = (K_OPT_BF * ((float)m / n));
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
@@ -532,7 +533,8 @@ BF* new_BF(int m, int n) {
     B_size = ((m % 8) == 0) ? (m / 8) : ((m / 8) + 1);
 
     bf_size = B_size + sizeof(BF);
-
+	
+	/* Set the struct variables */
     bf = palloc0(bf_size);
     bf->B_length = B_size;
     bf->m = m;
@@ -552,7 +554,8 @@ void insert_BF(BF* bf, char* e) {
     uint64_t i_hash;
     int index;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < bf->k; i++) { 
@@ -573,7 +576,8 @@ int query_BF(BF* bf, char* e) {
     uint64_t i_hash;
     int index;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < bf->k; i++) { 
@@ -585,8 +589,6 @@ int query_BF(BF* bf, char* e) {
         if (get_bit_BF(bf, index) != 1) { return 0; }
     } 
 
-    //print_BF(bf);
-
     return 1;
 }
 
@@ -594,7 +596,7 @@ int query_BF(BF* bf, char* e) {
 /* --- Count Min Sketch Functions --- */
 
 
-/* TODO */
+/* Constructor for CMS */
 CMS* new_CMS(float8 errorBound, float8 confidenceInterval) {
 
     CMS* cms = NULL;
@@ -633,7 +635,7 @@ CMS* new_CMS(float8 errorBound, float8 confidenceInterval) {
 }
 
 
-/* TODO */
+/* Function to insert data into a CMS */
 CMS* insert_CMS(CMS* currentCms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry) {
 
     Datum detoastedItem = 0;
@@ -654,7 +656,7 @@ CMS* insert_CMS(CMS* currentCms, Datum newItem, TypeCacheEntry* newItemTypeCache
 }
 
 
-/* TODO */
+/* Function to query a CMS */
 uint64 query_CMS(CMS* cms, Datum item, TypeCacheEntry* itemTypeCacheEntry) {
 
 	uint64 hashValueArray[2] = {0, 0};
@@ -683,7 +685,7 @@ uint64 query_CMS(CMS* cms, Datum item, TypeCacheEntry* itemTypeCacheEntry) {
 }
 
 
-/* TODO */
+/* Utility function for CMS to update in place */
 uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeCacheEntry) {
 
     uint32 hashIndex = 0;
@@ -735,7 +737,7 @@ uint64 update_cms_in_place(CMS* cms, Datum newItem, TypeCacheEntry* newItemTypeC
 }
 
 
-/* TODO */
+/* Utility function for CMS to convert datum from PostgreSQL to bytes */
 void convert_datum_to_bytes(Datum datum, TypeCacheEntry* datumTypeCacheEntry, StringInfo datumString) {
 
     int16 datumTypeLength = datumTypeCacheEntry->typlen;
@@ -762,7 +764,7 @@ void convert_datum_to_bytes(Datum datum, TypeCacheEntry* datumTypeCacheEntry, St
 }
 
 
-/* TODO */
+/* Utility function to estimate frequency for CMS */
 uint64 estimate_hashed_item_frequency(CMS* cms, uint64* hashValueArray) {
 
     uint32 hashIndex = 0;
@@ -799,6 +801,7 @@ ShBF* new_ShBF_M(int m, int n) {
     int B_size;
     Size shbf_size;
 
+	/* Calculate k */
     k_unrounded = K_OPT_SHBF_M * ((float)m / n) / 2;
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
@@ -809,6 +812,7 @@ ShBF* new_ShBF_M(int m, int n) {
 
     shbf_size = B_size + sizeof(ShBF);
 
+	/* Set the struct variables */
     shbf = palloc0(shbf_size);
     shbf->B_length = B_size;
     shbf->m = m;
@@ -832,7 +836,8 @@ void insert_ShBF_M(ShBF* shbf_m, char* e) {
     int first_index;
     int second_index;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_hash = hva[0];
@@ -862,7 +867,7 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
     int second_index;
     int i;
 
-    
+    /* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_hash = hva[0];
@@ -882,8 +887,6 @@ int query_ShBF_M(ShBF* shbf_m, char* e) {
         }
     }
 
-    //print_ShBF(shbf_m);
-
     return 1;
 }
 
@@ -896,7 +899,8 @@ ShBF* new_ShBF_A(int m, int n) {
     float k_unrounded;
     int B_size;
     Size shbf_size;
-
+	
+	/* Calculate k */
     k_unrounded = K_OPT_SHBF_A * ((float)m / n);
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
@@ -907,6 +911,7 @@ ShBF* new_ShBF_A(int m, int n) {
 
     shbf_size = B_size + sizeof(ShBF);
 
+	/* Set the struct variables */
     shbf = palloc0(shbf_size);
     shbf->B_length = B_size;
     shbf->m = m;
@@ -932,7 +937,8 @@ void insert_ShBF_A(ShBF* shbf_a, char* e, int s1, int s2) {
     int offset_value = 0;
     int index;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     first_offset_hash = hva[0];
@@ -973,7 +979,8 @@ int query_ShBF_A(ShBF* shbf_a, char* e) {
     int s1_only;
     int s2_only;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     first_offset_hash = hva[0];
@@ -998,7 +1005,8 @@ int query_ShBF_A(ShBF* shbf_a, char* e) {
         if (get_bit_ShBF(shbf_a, second_index) != 1) { both = 0;    }
         if (get_bit_ShBF(shbf_a, third_index)  != 1) { s2_only = 0; }
     }
-
+	
+	/* Output different answers based on the information from the query */
     if (both && s1_only && s2_only) { return 6; }
     else if (both && s1_only)       { return 5; }
     else if (both && s2_only)       { return 4; }
@@ -1021,6 +1029,7 @@ ShBF* new_ShBF_X(int m, int n, int max_x) {
     int B_size;
     Size shbf_size;
 
+	/* Calculate k */
     k_unrounded = K_OPT_SHBF_X * ((float)m / n);
     k_floor = (int)k_unrounded;
     k = ((k_unrounded - k_floor) >= 0.5) ? (k_floor + 1) : (k_floor);
@@ -1030,7 +1039,8 @@ ShBF* new_ShBF_X(int m, int n, int max_x) {
     B_size = ((B_size % 8) == 0) ? (B_size / 8) : ((B_size / 8) + 1);
 
     shbf_size = B_size + sizeof(ShBF);
-
+	
+	/* Set the struct variables */
     shbf = palloc0(shbf_size);
     shbf->B_length = B_size;
     shbf->m = m;
@@ -1052,7 +1062,8 @@ void insert_ShBF_X(ShBF* shbf_x, char* e, int x) {
     int offset_value;
     int index;
     int i;
-
+	
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     offset_value = x - 1;
@@ -1078,6 +1089,7 @@ int query_ShBF_X(ShBF* shbf_x, char* e) {
     int i;
     int j;
 
+	/* Hash the element */
     MurmurHash3_x64_128(e, strlen(e), MURMUR_HASH_SEED, &hva);
 
     for (i = 0; i < shbf_x->k; i++) {
@@ -1189,8 +1201,6 @@ void print_BF(BF* bf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
-    //ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
-
     printf("======= BF Contents =======\n");
     printf("Number of 1's: %d\n", ones);
     printf("Number of 0's: %d\n", zeros);
@@ -1218,8 +1228,6 @@ void print_ShBF(ShBF* shbf) {
         else { printf("ERROR - BIT NOT 0 or 1"); }
     }
 
-    //ereport(WARNING, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("")));
-    
     printf("====== ShBF Contents ======\n");
     printf("Number of 1's: %d\n", ones);
     printf("Number of 0's: %d\n", zeros);
@@ -1273,18 +1281,21 @@ void test_BF() {
     int positive;
     int j;
 
+	/* Generate random elements */
     elements = generate_elements(num_elements);
     elements_1 = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_elements_1);
     elements_2 = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_elements_2);
-
+	
     for (i = 0; i < num_elements_1; i++) { elements_1[i] = elements[i]; }
     for (i = 0; i < num_elements_2; i++) { elements_2[i] = elements[i + num_elements_1]; }
 
+	/* Initialize the BF */
     test = new_BF(1285, num_elements_1);
 
     printf("===== BEFORE INSERTION ====\n");
     print_BF(test);
 
+	/* Insert the data into the BF */
     for (i = 0; i < num_elements_1; i++) {
     
         insert_BF(test, elements_1[i]);        
@@ -1293,6 +1304,7 @@ void test_BF() {
     printf("===== AFTER INSERTION =====\n");
     print_BF(test);
 
+	/* Query the data from the BF */
     for (i = 0; i < num_elements_1; i++) {
     
         query_result = query_BF(test, elements_1[i]);
@@ -1352,6 +1364,7 @@ void test_iBF() {
     int query_result_s1;
     int query_result_s2;
 
+	/* Generate random elements */
     elements = generate_elements(num_elements);
     s1_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_s1_elements);
     s2_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_s2_elements);
@@ -1364,6 +1377,7 @@ void test_iBF() {
         s2_elements[i + num_s2_only_elements] = elements[i + num_s1_only_elements + num_s2_only_elements];
     }
 
+	/* Initialize the iBF */
     test_s1 = new_BF(1000, num_s1_elements);
     test_s2 = new_BF(1000, num_s2_elements); 
 
@@ -1371,6 +1385,7 @@ void test_iBF() {
     print_BF(test_s1);
     print_BF(test_s2);
 
+	/* Insert the data into the iBF */
     for (i = 0; i < num_s1_elements; i++) { insert_BF(test_s1, s1_elements[i]); }
     for (i = 0; i < num_s2_elements; i++) { insert_BF(test_s2, s2_elements[i]); }
 
@@ -1378,8 +1393,9 @@ void test_iBF() {
     print_BF(test_s1);
     print_BF(test_s2);
 
-    printf("\n===== TESTING S1 ONLY ELEMENTS =====\n");    
-
+    printf("\n===== TESTING S1 ONLY ELEMENTS =====\n"); 
+	
+	/* Query the data from the iBF */
     for (i = 0; i < num_s1_only_elements; i++) { 
 
         query_result_s1 = query_BF(test_s1, s1_elements[i]);
@@ -1447,6 +1463,7 @@ void test_ShBF_M() {
     int positive;
     int j;
 
+	/* Generate random elements */
     elements = generate_elements(num_elements);
     elements_1 = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_elements_1);
     elements_2 = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * num_elements_2);
@@ -1454,11 +1471,13 @@ void test_ShBF_M() {
     for (i = 0; i < num_elements_1; i++) { elements_1[i] = elements[i]; }
     for (i = 0; i < num_elements_2; i++) { elements_2[i] = elements[i + num_elements_1]; }
 
+	/* Initialize the ShBF_M */
     test = new_ShBF_M(1285, num_elements_1);
 
     printf("===== BEFORE INSERTION ====\n");
     print_ShBF(test);
 
+	/* Insert the data into the ShBF_M */
     for (i = 0; i < num_elements_1; i++) {
     
         insert_ShBF_M(test, elements_1[i]);        
@@ -1466,7 +1485,8 @@ void test_ShBF_M() {
 
     printf("===== AFTER INSERTION =====\n");
     print_ShBF(test);
-
+	
+	/* Query the data from the ShBF_M */
     for (i = 0; i < num_elements_1; i++) {
     
         query_result = query_ShBF_M(test, elements_1[i]);
@@ -1524,6 +1544,7 @@ void test_ShBF_A() {
     ShBF* test;
     int query_result;
 
+	/* Generate random elements */
     elements = generate_elements(num_elements);
     s1_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * (num_s1_only_elements + num_both_elements));
     s2_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * (num_s2_only_elements + num_both_elements));
@@ -1536,11 +1557,13 @@ void test_ShBF_A() {
         s2_elements[i + num_s2_only_elements] = elements[i + num_s1_only_elements + num_s2_only_elements];
     }
 
+	/* Initialize the ShBF_A */
     test = new_ShBF_A(3000, num_elements);
 
     printf("===== BEFORE INSERTION ====\n");
     print_ShBF(test);
 
+	/* Insert the data into the ShBF_A */
     for (i = 0; i < num_s1_only_elements; i++) { insert_ShBF_A(test, s1_elements[i], 1, 0); }
     for (i = 0; i < num_s2_only_elements; i++) { insert_ShBF_A(test, s2_elements[i], 0, 1); }
     for (i = 0; i < num_both_elements; i++)    { insert_ShBF_A(test, s1_elements[i + num_s1_only_elements], 1, 1); }
@@ -1548,8 +1571,9 @@ void test_ShBF_A() {
     printf("===== AFTER INSERTION =====\n");
     print_ShBF(test);
 
-    printf("\n===== TESTING S1 ONLY ELEMENTS =====\n");    
-
+    printf("\n===== TESTING S1 ONLY ELEMENTS =====\n"); 
+	
+	/* Query the data from the ShBF_A */
     for (i = 0; i < num_s1_only_elements; i++) { 
     
         query_result = query_ShBF_A(test, s1_elements[i]); 
@@ -1613,16 +1637,19 @@ void test_ShBF_X() {
     int query_result;
     int* counts;
 
+	/* Generate random elements */
     s_elements = generate_elements(num_s_elements);
     r_elements = generate_elements(num_r_elements);   
 
     counts = (int*)malloc(num_s_elements * sizeof(int));
 
+	/* Initialize the ShBF_X */
     test = new_ShBF_X(1000, num_s_elements, 40);
 
     printf("===== BEFORE INSERTION ====\n");
     print_ShBF(test);
 
+	/* Insert the data into the ShBF_X */
     for (i = 0; i < num_s_elements; i++) {
     
         counts[i] = (rand() % test->w) + 1;
@@ -1634,6 +1661,7 @@ void test_ShBF_X() {
     
     printf("====== TESTING COUNTS ======\n");
 
+	/* Query the data from the ShBF_X */
     for (i = 0; i < num_s_elements; i++) {
 
         query_result = query_ShBF_X(test, s_elements[i]);
@@ -1647,7 +1675,7 @@ void test_ShBF_X() {
     }
 
     printf("\n====== TESTING 0 COUNTS ======\n");
-
+	
     for (i = 0; i < num_r_elements; i++) {
 
         query_result = query_ShBF_X(test, r_elements[i]);
@@ -1667,32 +1695,17 @@ char** generate_elements(int n) {
     char** random_elements;
     char* random_element;
     int size = 0;
-    //int duplicate;
-    //int i;
     
+	/* Malloc the element list */
     random_elements = (char**)malloc(((ELEMENT_LENGTH + 1) * sizeof(char)) * n);
 
     while (size < n) {
-
-        //printf("Size: %d\n", size);
-
+		
+		/* Generate the random element */
         random_element = generate_element();
-
-        //duplicate = 0;
-        //for (i = 0; i < size; i++) {
-
-        //    if (!strcmp(random_element, random_elements[i])) {
-
-        //        duplicate = 1;
-        //        break;
-        //    }
-        //}
-
-        //if (!duplicate) { 
         
-            random_elements[size] = random_element;
-            size += 1; 
-        //}
+        random_elements[size] = random_element;
+        size += 1; 
     }
 
     return random_elements;
@@ -1701,10 +1714,12 @@ char** generate_elements(int n) {
 
 /* Generates a random 10 digit element */
 char* generate_element() {
-
+	
+	/* Malloc the element */
     char* random_element = (char*)malloc((ELEMENT_LENGTH + 1) * sizeof(char));
     int i;
 
+	/* Generate random digits */
     for (i = 0; i < ELEMENT_LENGTH; i++) {
 
         random_element[i] = (rand() % 10) + '0';
