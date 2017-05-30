@@ -9,6 +9,5 @@ framework within the PostgreSQL database management system. The original work ca
 be found here:<br><br>
 [Shifting Bloom Filter Framework for Set Queries](http://www.vldb.org/pvldb/vol9/p408-yang.pdf)
 <br>
-<br>
 ### Instructions
 Detailed instructions regarding dependencies and how to use this extension is in the process of being written.
